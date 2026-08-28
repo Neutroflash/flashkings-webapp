@@ -13,7 +13,14 @@ const HOLD_MINUTES = 15;
 
 declare global {
   interface Window {
-    Culqi?: { publicKey: string; settings: (opts: unknown) => void; open: () => void };
+    Culqi?: {
+      publicKey: string;
+      settings: (opts: unknown) => void;
+      open: () => void;
+      close: () => void;
+      token?: { id: string };
+      error?: { user_message?: string; merchant_message?: string };
+    };
     culqi?: () => void;
   }
 }
@@ -25,6 +32,9 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
   const [orderId, setOrderId] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [culqiReady, setCulqiReady] = useState(false);
+  const [culqiScriptError, setCulqiScriptError] = useState(false);
+  const [scriptRetryKey, setScriptRetryKey] = useState(0);
   const [deadline, setDeadline] = useState<number | null>(null);
   const [remainingMs, setRemainingMs] = useState(HOLD_MINUTES * 60 * 1000);
   const [submitting, setSubmitting] = useState(false);
@@ -37,16 +47,51 @@ export default function CheckoutPage() {
     return () => clearInterval(interval);
   }, [deadline]);
 
-  useEffect(() => {
-    if (!orderId || !publicKey || typeof window === "undefined" || !window.Culqi) return;
+  // Belt-and-suspenders cleanup: Culqi.close() *should* remove its own overlay (confirmed against
+  // Culqi's own official checkout-v4 demo, which calls it the same way), but in practice it can
+  // leave a stray node behind — especially right before a client-side route change interrupts
+  // whatever closing transition it was mid-way through. This force-hides anything Culqi injected,
+  // as a fallback that doesn't depend on the SDK's own cleanup actually finishing in time.
+  function forceHideCulqiOverlay() {
+    document.querySelectorAll('[id*="culqi" i], [class*="culqi" i]').forEach((el) => {
+      (el as HTMLElement).style.display = "none";
+    });
+  }
+
+  function openCulqiWidget() {
+    if (!publicKey || !window.Culqi) return;
     window.Culqi.publicKey = publicKey;
     window.Culqi.settings({ title: "Flashkings", currency: "PEN", amount: Math.round(totalPrice() * 100) });
+    // Culqi renders its own modal outside React's control (injected straight into the DOM), so
+    // it never closes on its own once the user submits a card inside it — not even once we
+    // navigate away client-side. We close it explicitly the moment we get a result back, then
+    // take over all further feedback (the "Confirmando tu pago..." banner below) on our own page,
+    // so the customer isn't left staring at a stale widget while our backend confirms the charge.
     window.culqi = () => {
-      const token = (window as unknown as { Culqi: { token?: { id: string } } }).Culqi.token;
-      if (token?.id) void handlePay(token.id);
+      const culqi = window.Culqi;
+      culqi?.close();
+      // A tick after close() so its own transition/cleanup gets a chance to run before our
+      // force-hide fallback and the rest of the flow (navigation) kick in.
+      setTimeout(forceHideCulqiOverlay, 50);
+      if (culqi?.token?.id) {
+        void handlePay(culqi.token.id);
+      } else if (culqi?.error) {
+        setError(culqi.error.user_message ?? culqi.error.merchant_message ?? "No se pudo procesar la tarjeta.");
+      }
     };
+    window.Culqi.open();
+  }
+
+  // Auto-opens once an order exists AND the script has actually finished loading (tracked via
+  // <Script onLoad>, not assumed) — calling window.Culqi.open() before the script loads is a
+  // silent no-op (optional chaining swallows it), which was leaving the page on a dead end with
+  // no visible button. The manual "Abrir pago" button below is the fallback if this doesn't fire
+  // (e.g. a popup blocker, or the user closed the modal without paying).
+  useEffect(() => {
+    if (!orderId || !publicKey || !culqiReady) return;
+    openCulqiWidget();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, publicKey]);
+  }, [orderId, publicKey, culqiReady]);
 
   async function handleStartPayment(e: FormEvent) {
     e.preventDefault();
@@ -61,12 +106,6 @@ export default function CheckoutPage() {
       setOrderId(response.orderId);
       setPublicKey(response.publicKey || null);
       setDeadline(Date.now() + HOLD_MINUTES * 60 * 1000);
-
-      if (!response.publicKey) {
-        // Dev/test mode: backend is running with PAYMENT_GATEWAY=fake, no real Culqi widget to open.
-        return;
-      }
-      window.Culqi?.open();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el pago");
     } finally {
@@ -82,6 +121,12 @@ export default function CheckoutPage() {
       const result = await chargeOrder(orderId, sourceId);
       if (result.status === "succeeded") {
         clear();
+        forceHideCulqiOverlay();
+        // Gives Culqi's own close animation a moment to finish before we swap the page out from
+        // under it — the "Confirmando tu pago..." banner is already visible, so this reads as
+        // part of the confirmation step, not a random stall.
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        forceHideCulqiOverlay();
         router.push(`/pedido/${orderId}/confirmacion`);
       } else if (result.status === "failed") {
         setError("El pago fue rechazado. Vuelve a intentarlo o usa otro método.");
@@ -113,7 +158,19 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto grid max-w-3xl gap-8">
-      {publicKey && <Script src="https://checkout.culqi.com/js/v4" strategy="afterInteractive" />}
+      {/* Loaded unconditionally (not gated on publicKey) so it's ready by the time an order
+          exists, instead of racing the order-creation request. `key` forces a real remount
+          (and a fresh network request) when the user clicks "Reintentar" after a load failure. */}
+      <Script
+        key={scriptRetryKey}
+        src="https://checkout.culqi.com/js/v4"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setCulqiReady(true);
+          setCulqiScriptError(false);
+        }}
+        onError={() => setCulqiScriptError(true)}
+      />
 
       <h1 className="text-3xl font-bold">Checkout</h1>
 
@@ -131,6 +188,13 @@ export default function CheckoutPage() {
       )}
 
       {error && <div className="rounded-md border border-destructive px-4 py-2 text-sm text-destructive">{error}</div>}
+
+      {paying && (
+        <div className="flex items-center gap-3 rounded-md border border-secondary bg-secondary/10 px-4 py-3 text-sm text-secondary">
+          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
+          Confirmando tu pago con el banco... no cierres ni recargues esta página.
+        </div>
+      )}
 
       <form onSubmit={handleStartPayment} className="flex flex-col gap-4">
         <div className="grid gap-1">
@@ -186,10 +250,36 @@ export default function CheckoutPage() {
           </Button>
         )}
 
-        {orderId && !publicKey && (
-          <Button type="button" size="lg" disabled={paying} onClick={() => handlePay(`fake_source_${orderId}`)}>
-            {paying ? "Procesando..." : "Pagar (modo de prueba)"}
+        {orderId && !publicKey && !paying && (
+          <Button type="button" size="lg" onClick={() => handlePay(`fake_source_${orderId}`)}>
+            Pagar (modo de prueba)
           </Button>
+        )}
+
+        {orderId && publicKey && !culqiScriptError && !paying && (
+          <Button type="button" size="lg" disabled={!culqiReady} onClick={openCulqiWidget}>
+            {culqiReady ? "Abrir pago" : "Cargando pasarela..."}
+          </Button>
+        )}
+
+        {orderId && publicKey && culqiScriptError && !paying && (
+          <div className="flex flex-col items-start gap-2 rounded-md border border-destructive px-4 py-3 text-sm text-destructive">
+            <p>
+              No se pudo cargar la pasarela de pago (checkout.culqi.com). Revisa la pestaña Network de tu navegador,
+              desactiva bloqueadores de anuncios/scripts para ese dominio, o prueba tu conexión.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCulqiScriptError(false);
+                setScriptRetryKey((k) => k + 1);
+              }}
+            >
+              Reintentar
+            </Button>
+          </div>
         )}
       </form>
     </div>

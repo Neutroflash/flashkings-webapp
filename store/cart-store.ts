@@ -65,6 +65,14 @@ export const useCartStore = create<CartState>()(
       name: "flashkings-cart",
       // isOpen is transient UI state — never persist it, or a closed-tab reload would reopen the drawer.
       partialize: (state) => ({ items: state.items }),
+      // Zustand's persist middleware rehydrates from localStorage synchronously by default —
+      // on the client that happens before/during hydration, while SSR always rendered with the
+      // default empty state. Any component reading `items`/`totalItems` (Navbar's cart badge,
+      // CartDrawer, checkout) then mismatches between server and client HTML, which throws a
+      // hydration error and can abort the rest of the client render (e.g. <Script> never mounts).
+      // skipHydration + manual rehydrate() after mount (see components/providers/CartHydration.tsx)
+      // guarantees the first client render matches the server: empty, then updates post-hydration.
+      skipHydration: true,
     },
   ),
 );

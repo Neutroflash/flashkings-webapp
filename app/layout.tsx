@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { CartHydration } from "@/components/providers/CartHydration";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className="dark">
       <body className={inter.className}>
         <QueryProvider>
+          <CartHydration />
           <Navbar />
           <main className="mx-auto min-h-screen max-w-7xl px-4 py-8">{children}</main>
           <CartDrawer />
