@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -33,6 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className="dark">
       <body className={inter.className}>
         <QueryProvider>
+          {/* Preloaded site-wide (not just on /checkout) so it has a head start over the multi-
+              hundred-KB third-party bundle by the time the customer reaches checkout and clicks
+              "Iniciar Pago" — mounting it only on the checkout page raced the order-creation
+              request on a first visit (fast local API call vs. a cold third-party download),
+              which is exactly why refreshing "fixed" it: the browser had it cached by then. */}
+          <Script src="https://checkout.culqi.com/js/v4" strategy="afterInteractive" />
           <CartHydration />
           <Navbar />
           <main className="mx-auto min-h-screen max-w-7xl px-4 py-8">{children}</main>

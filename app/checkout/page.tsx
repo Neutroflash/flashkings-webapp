@@ -63,6 +63,25 @@ export default function CheckoutPage() {
     return () => clearInterval(interval);
   }, [deadline]);
 
+  // Backup for the layout-level <Script>'s onLoad: if the script already finished loading
+  // (e.g. from an earlier page) before this component mounted, that onLoad already fired and
+  // this page would never hear about it — poll for window.Culqi directly so culqiReady doesn't
+  // depend on catching a load event fired before we were listening.
+  useEffect(() => {
+    if (window.Culqi) {
+      setCulqiReady(true);
+      return;
+    }
+    const poll = setInterval(() => {
+      if (window.Culqi) {
+        setCulqiReady(true);
+        clearInterval(poll);
+      }
+    }, 200);
+    return () => clearInterval(poll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scriptRetryKey]);
+
   // Belt-and-suspenders cleanup: Culqi.close() *should* remove its own overlay (confirmed against
   // Culqi's own official checkout-v4 demo, which calls it the same way), but in practice it can
   // leave a stray node behind — especially right before a client-side route change interrupts
