@@ -5,6 +5,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 // Client-safe: no next/headers import, so this can be imported from "use client" components
 // (InventoryTable/OrderStatusActions) — the browser sends cookies automatically via credentials: "include".
 
+/** Same /auth/logout endpoint the customer account area uses (it doesn't distinguish by role,
+ * just clears the auth cookies) — named separately here since it's called from the admin sidebar. */
+export async function logoutAdmin(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
+}
+
 export async function updateProductVariant(
   variantId: string,
   data: { price?: number; costPrice?: number; stock?: number },

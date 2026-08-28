@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { FileWarning, LayoutGrid, Package } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { FileWarning, LayoutGrid, LogOut, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logoutAdmin } from "@/lib/admin-mutations";
 
 const LINKS = [
   { href: "/admin/inventory", label: "Inventario", icon: Package },
@@ -13,6 +15,15 @@ const LINKS = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await logoutAdmin();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <nav className="flex h-fit flex-col gap-1 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 backdrop-blur-md">
@@ -37,6 +48,18 @@ export function AdminSidebar() {
           </Link>
         );
       })}
+
+      <hr className="my-2 border-zinc-800/80" />
+
+      <button
+        type="button"
+        disabled={loggingOut}
+        onClick={handleLogout}
+        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-red-400 disabled:opacity-50"
+      >
+        <LogOut className="h-4 w-4" />
+        {loggingOut ? "Saliendo..." : "Cerrar sesión"}
+      </button>
     </nav>
   );
 }
