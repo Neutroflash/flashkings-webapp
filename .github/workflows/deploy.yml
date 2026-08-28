@@ -1,0 +1,38 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: npx next lint
+
+      # Build succeeding here is the real gate — Vercel's own GitHub integration (connect the
+      # repo in the Vercel dashboard) deploys on push to main and runs this same build; this job
+      # exists so a broken build fails CI immediately instead of only surfacing on Vercel.
+      - name: Build
+        run: npx next build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.flashkings.pe/api
+          NEXT_PUBLIC_SITE_URL: https://flashkings.pe
+
+  # Required environment variables in the Vercel project settings (Production):
+  #   NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL

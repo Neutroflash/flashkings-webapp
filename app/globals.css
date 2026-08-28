@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark Gaming/Tech theme — dark background, gold + blue neon accents */
+    --background: 0 0% 7%; /* #121212 */
+    --foreground: 0 0% 96%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 96%;
+    --border: 0 0% 20%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 63%;
+    --primary: 45 93% 55%; /* gold neon */
+    --primary-foreground: 0 0% 9%;
+    --secondary: 205 100% 55%; /* blue neon */
+    --secondary-foreground: 0 0% 9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 96%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
