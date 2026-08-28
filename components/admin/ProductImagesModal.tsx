@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ImagePlus, Star, Trash2, X } from "lucide-react";
 import { AdminProduct } from "@/types/admin";
 import { addProductImage, deleteProductImage, updateProductImage } from "@/lib/admin-mutations";
+import { triggerRevalidate } from "@/lib/revalidate";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
@@ -28,6 +29,13 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
 
   const images = product.images ?? [];
 
+  // /producto/[slug] revalidates every 3600s (tuned for public SEO traffic) — without this ping,
+  // an admin's image edit wouldn't show up there for up to an hour, even though /admin/inventory
+  // itself (router.refresh()) and /catalogo (60s window) would already reflect it.
+  function revalidatePublicPages() {
+    void triggerRevalidate([`/producto/${product.slug}`, "/catalogo", "/"]);
+  }
+
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -39,6 +47,7 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
       setUrl("");
       setAltText("");
       router.refresh();
+      revalidatePublicPages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo agregar la imagen");
     } finally {
@@ -52,6 +61,7 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
     try {
       await updateProductImage(imageId, { isPrimary: true });
       router.refresh();
+      revalidatePublicPages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo actualizar la imagen");
     } finally {
@@ -65,6 +75,7 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
     try {
       await deleteProductImage(imageId);
       router.refresh();
+      revalidatePublicPages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo eliminar la imagen");
     } finally {

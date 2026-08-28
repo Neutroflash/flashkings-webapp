@@ -7,13 +7,14 @@ import { Images } from "lucide-react";
 import { AdminProduct } from "@/types/admin";
 import { cn, formatPrice } from "@/lib/utils";
 import { updateProductVariant } from "@/lib/admin-mutations";
+import { triggerRevalidate } from "@/lib/revalidate";
 import { Button } from "@/components/ui/button";
 import { ProductImagesModal } from "./ProductImagesModal";
 
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
 
-function VariantRow({ variant }: { variant: AdminProduct["variants"][number] }) {
+function VariantRow({ productSlug, variant }: { productSlug: string; variant: AdminProduct["variants"][number] }) {
   const router = useRouter();
   const [price, setPrice] = useState(String(variant.price));
   const [costPrice, setCostPrice] = useState(String(variant.costPrice));
@@ -26,9 +27,14 @@ function VariantRow({ variant }: { variant: AdminProduct["variants"][number] }) 
         costPrice: Number(costPrice),
         stock: Number(stock),
       }),
-    // Data comes from the Server Component's props (lib/admin-api.ts), not a TanStack Query
-    // cache, so router.refresh() re-runs the server fetch instead of invalidating a query key.
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      // Data comes from the Server Component's props (lib/admin-api.ts), not a TanStack Query
+      // cache, so router.refresh() re-runs the server fetch instead of invalidating a query key.
+      router.refresh();
+      // /producto/[slug] revalidates every 3600s (public SEO tuning) — ping it directly so a
+      // price/stock edit shows up there immediately instead of up to an hour later.
+      void triggerRevalidate([`/producto/${productSlug}`, "/catalogo", "/"]);
+    },
   });
 
   const margin = Number(price) - Number(costPrice);
@@ -97,7 +103,7 @@ function ProductGroup({ product }: { product: AdminProduct }) {
         </td>
       </tr>
       {product.variants.map((variant) => (
-        <VariantRow key={variant.id} variant={variant} />
+        <VariantRow key={variant.id} productSlug={product.slug} variant={variant} />
       ))}
 
       <ProductImagesModal product={product} open={imagesModalOpen} onOpenChange={setImagesModalOpen} />
