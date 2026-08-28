@@ -70,7 +70,7 @@ export function BrandMarquee() {
   const track = [...BRANDS, ...BRANDS];
 
   return (
-    <div className="group relative overflow-hidden border-y border-zinc-800/50 bg-black/30 py-8 backdrop-blur-sm">
+    <div className="group relative z-10 mb-8 mt-4 overflow-hidden border-y border-zinc-800/50 bg-black/30 py-8 backdrop-blur-sm">
       <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent" />
       <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent" />
 

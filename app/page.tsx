@@ -10,9 +10,12 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-16">
-      <HeroSection />
-
-      <BrandMarquee />
+      {/* Grouped so BrandMarquee sits right under the Hero's CTA (mt-4) instead of inheriting
+          this container's gap-16 — that gap alone was pushing it below the fold. */}
+      <div className="flex flex-col">
+        <HeroSection />
+        <BrandMarquee />
+      </div>
 
       <section>
         <h2 className="mb-6 text-2xl font-bold">Productos destacados</h2>

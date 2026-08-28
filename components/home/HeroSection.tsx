@@ -16,7 +16,7 @@ const item: Variants = {
 
 export function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center gap-6 overflow-hidden py-28 text-center sm:py-36">
+    <section className="relative flex flex-col items-center gap-6 overflow-hidden py-12 text-center sm:py-16">
       {/* Diffused light glows behind the headline — gold dominant, a faint cyan echo for "speed" */}
       <div
         aria-hidden
