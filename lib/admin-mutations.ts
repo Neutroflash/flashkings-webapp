@@ -1,4 +1,4 @@
-import { OrderStatus } from "@/types/order";
+import { InvoiceType, OrderInvoice, OrderStatus } from "@/types/order";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -193,6 +193,27 @@ export function confirmManualPayment(orderId: string): Promise<void> {
 /** Rejects a manual Yape/Plin payment claim — releases the held stock instead of leaving it locked. */
 export function rejectManualPayment(orderId: string): Promise<void> {
   return postAdminAction(`/admin/orders/${orderId}/reject-payment`);
+}
+
+export interface IssueInvoiceInput {
+  type: InvoiceType;
+  documentType: string;
+  documentNumber: string;
+  businessName?: string;
+}
+
+export async function issueInvoice(orderId: string, data: IssueInvoiceInput): Promise<OrderInvoice> {
+  const res = await fetch(`${API_URL}/admin/orders/${orderId}/invoice`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const body = (await res.json()) as { invoice?: OrderInvoice; error?: string };
+  if (!res.ok || !body.invoice) {
+    throw new Error(body.error ?? "No se pudo emitir el comprobante");
+  }
+  return body.invoice;
 }
 
 export async function respondComplaint(complaintId: string, providerResponse: string): Promise<void> {

@@ -19,6 +19,22 @@ export interface OrderPayment {
   status: string;
 }
 
+export type InvoiceType = "BOLETA" | "FACTURA";
+
+export interface OrderInvoice {
+  id: string;
+  type: InvoiceType;
+  status: "ISSUED" | "FAILED" | "VOID";
+  series: string;
+  number: number;
+  documentType: string;
+  documentNumber: string;
+  businessName: string | null;
+  pdfUrl: string | null;
+  xmlUrl: string | null;
+  issuedAt: string | null;
+}
+
 export interface Order {
   id: string;
   status: OrderStatus;
@@ -33,6 +49,7 @@ export interface Order {
   trackingNumber: string | null;
   courier: string | null;
   payment?: OrderPayment | null;
+  invoice?: OrderInvoice | null;
   createdAt: string;
   items: OrderItem[];
 }

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderStatusActions } from "@/components/admin/OrderStatusActions";
 import { PaymentVerificationActions } from "@/components/admin/PaymentVerificationActions";
+import { InvoiceSection } from "@/components/admin/InvoiceSection";
 import { formatPrice } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
@@ -59,6 +60,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
       </div>
 
       {order.payment && <PaymentVerificationActions orderId={order.id} payment={order.payment} />}
+
+      <InvoiceSection order={order} />
 
       <OrderStatusActions orderId={order.id} status={order.status} />
     </div>
