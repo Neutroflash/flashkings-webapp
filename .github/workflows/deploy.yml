@@ -12,27 +12,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
+          bun-version: latest
 
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
       - name: Type-check
-        run: npx tsc --noEmit -p tsconfig.json
+        run: bunx tsc --noEmit -p tsconfig.json
 
       - name: Lint
-        run: npx next lint
+        run: bunx next lint
 
       # Build succeeding here is the real gate — Vercel's own GitHub integration (connect the
       # repo in the Vercel dashboard) deploys on push to main and runs this same build; this job
       # exists so a broken build fails CI immediately instead of only surfacing on Vercel.
       - name: Build
-        run: npx next build
+        run: bunx next build
         env:
           NEXT_PUBLIC_API_URL: https://api.flashkings.pe/api
           NEXT_PUBLIC_SITE_URL: https://flashkings.pe
 
   # Required environment variables in the Vercel project settings (Production):
   #   NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL
+  #
+  # Vercel note: set the project's Install Command to `bun install` (Project Settings ->
+  # General -> Build & Development Settings) so it uses bun.lock instead of defaulting to npm.
