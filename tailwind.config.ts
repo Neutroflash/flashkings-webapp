@@ -51,6 +51,10 @@ const config: Config = {
           "0%": { transform: "translateX(-150%)" },
           "100%": { transform: "translateX(150%)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -63,6 +67,9 @@ const config: Config = {
       animation: {
         "glow-pulse": "glow-pulse 2.4s ease-in-out infinite",
         shimmer: "shimmer 1.4s ease-in-out infinite",
+        // Track renders the brand list twice back-to-back; a full loop to -50% lands exactly on
+        // where the duplicate begins, so the seam is invisible.
+        marquee: "marquee 28s linear infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
