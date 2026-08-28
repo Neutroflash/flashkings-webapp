@@ -12,6 +12,11 @@ export default async function CuentaPage() {
   if (!user) {
     redirect("/cuenta/ingresar?redirect=/cuenta");
   }
+  // An admin has no customer order history to show here — belongs in the admin panel instead,
+  // even if they reach this URL directly (a bookmark, the Navbar icon before it updates, etc.).
+  if (user.role === "ADMIN") {
+    redirect("/admin");
+  }
 
   const { items: orders } = await getMyOrdersServer();
 

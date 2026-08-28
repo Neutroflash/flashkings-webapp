@@ -82,12 +82,14 @@ export function Navbar() {
               </div>
             </form>
 
-            <Link href={currentUser ? "/cuenta" : "/cuenta/ingresar"}>
+            <Link
+              href={currentUser?.role === "ADMIN" ? "/admin" : currentUser ? "/cuenta" : "/cuenta/ingresar"}
+            >
               <Button
                 variant="outline"
                 size="icon"
                 className="shrink-0 rounded-full border-white/10 bg-white/5 hover:border-yellow-500/50"
-                aria-label={currentUser ? "Mi cuenta" : "Iniciar sesión"}
+                aria-label={currentUser?.role === "ADMIN" ? "Panel admin" : currentUser ? "Mi cuenta" : "Iniciar sesión"}
               >
                 <User className="h-5 w-5" />
               </Button>

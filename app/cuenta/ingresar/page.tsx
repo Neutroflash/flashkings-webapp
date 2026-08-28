@@ -26,9 +26,11 @@ function IngresarForm() {
     setLoading(true);
     setError(null);
     try {
-      await loginCustomer({ email, password });
+      const user = await loginCustomer({ email, password });
       invalidateCurrentUser();
-      router.push(redirectTo);
+      // An admin logging in here (this page is also linked from the Navbar's account icon for
+      // anyone signed out) belongs in the admin panel, not the customer account view.
+      router.push(user.role === "ADMIN" ? "/admin" : redirectTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
