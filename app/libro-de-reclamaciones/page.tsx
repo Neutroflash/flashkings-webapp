@@ -139,8 +139,8 @@ export default function LibroDeReclamacionesPage() {
             <label className={labelClass}>Nombres y apellidos</label>
             <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
           </div>
-          <div className="flex gap-3">
-            <div className="w-1/3">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="sm:w-1/3">
               <label className={labelClass}>Documento</label>
               <select
                 value={documentType}
@@ -162,7 +162,7 @@ export default function LibroDeReclamacionesPage() {
             <label className={labelClass}>Domicilio</label>
             <input required value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
               <label className={labelClass}>Teléfono (opcional)</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
@@ -196,8 +196,8 @@ export default function LibroDeReclamacionesPage() {
 
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-1 text-sm font-semibold text-zinc-200">Datos del bien contratado</legend>
-          <div className="flex gap-3">
-            <div className="w-1/3">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="sm:w-1/3">
               <label className={labelClass}>Tipo</label>
               <select
                 value={goodType}
