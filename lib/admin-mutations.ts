@@ -91,6 +91,68 @@ export async function deleteProductImage(imageId: string): Promise<void> {
   }
 }
 
+export interface CreateCategoryInput {
+  name: string;
+  description?: string;
+}
+
+export interface CreateCategoryResult {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export async function createCategory(data: CreateCategoryInput): Promise<CreateCategoryResult> {
+  const res = await fetch(`${API_URL}/categories`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const body = (await res.json()) as { category?: CreateCategoryResult; error?: string };
+  if (!res.ok || !body.category) {
+    throw new Error(body.error ?? "No se pudo crear la categoría");
+  }
+  return body.category;
+}
+
+export interface CreateProductVariantInput {
+  sku: string;
+  name: string;
+  price: number;
+  costPrice: number;
+  stock: number;
+  attributes?: Record<string, string>;
+}
+
+export interface CreateProductInput {
+  name: string;
+  description?: string;
+  brand: string;
+  categoryId: string;
+  isFeatured?: boolean;
+  variants: CreateProductVariantInput[];
+}
+
+export interface CreateProductResult {
+  id: string;
+  slug: string;
+}
+
+export async function createProduct(data: CreateProductInput): Promise<CreateProductResult> {
+  const res = await fetch(`${API_URL}/products`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const body = (await res.json()) as { product?: CreateProductResult; error?: string };
+  if (!res.ok || !body.product) {
+    throw new Error(body.error ?? "No se pudo crear el producto");
+  }
+  return body.product;
+}
+
 async function postAdminAction(path: string): Promise<void> {
   const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include" });
   if (!res.ok) {

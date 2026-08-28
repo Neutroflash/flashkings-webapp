@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { AdminProduct } from "@/types/admin";
 import { Order, OrderStatus } from "@/types/order";
 import { SafeUser } from "@/types/auth";
+import { Category } from "@/types/product";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -38,6 +39,11 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
 export async function getAdminProducts(): Promise<AdminProduct[]> {
   const { items } = await adminFetch<{ items: AdminProduct[] }>("/products?pageSize=100");
   return items;
+}
+
+export async function getAdminCategories(): Promise<Category[]> {
+  const { categories } = await adminFetch<{ categories: Category[] }>("/categories");
+  return categories;
 }
 
 export interface PaginatedAdminOrders {
