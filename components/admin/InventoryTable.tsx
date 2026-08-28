@@ -93,12 +93,12 @@ function ProductGroup({ product, categories }: { product: AdminProduct; categori
     <>
       <tr className="border-b border-zinc-800/60 bg-white/[0.02]">
         <td colSpan={7} className="p-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <span className="font-semibold text-zinc-100">{product.name}</span>
               <span className="ml-2 text-xs text-zinc-500">{product.brand}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => setEditModalOpen(true)}>
                 <Pencil className="mr-1.5 h-3.5 w-3.5" />
                 Editar

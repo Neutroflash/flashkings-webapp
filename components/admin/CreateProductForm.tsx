@@ -161,7 +161,7 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-zinc-300">Categoría</label>
           {!newCategoryMode ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={cn(inputClass, "flex-1")}>
                 {categories.length === 0 && <option value="">Sin categorías todavía</option>}
                 {categories.map((c) => (
@@ -170,13 +170,13 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                   </option>
                 ))}
               </select>
-              <Button type="button" size="sm" variant="outline" onClick={() => setNewCategoryMode(true)}>
+              <Button type="button" size="sm" variant="outline" className="self-start" onClick={() => setNewCategoryMode(true)}>
                 <Plus className="mr-1 h-3.5 w-3.5" />
                 Nueva
               </Button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 autoFocus
                 placeholder="Nombre de la categoría"
@@ -184,14 +184,16 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 className={cn(inputClass, "flex-1")}
               />
-              <Button type="button" size="sm" disabled={creatingCategory} onClick={handleCreateCategory}>
-                {creatingCategory ? "Creando..." : "Crear"}
-              </Button>
-              {categories.length > 0 && (
-                <Button type="button" size="sm" variant="ghost" onClick={() => setNewCategoryMode(false)}>
-                  Cancelar
+              <div className="flex gap-2">
+                <Button type="button" size="sm" disabled={creatingCategory} onClick={handleCreateCategory}>
+                  {creatingCategory ? "Creando..." : "Crear"}
                 </Button>
-              )}
+                {categories.length > 0 && (
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setNewCategoryMode(false)}>
+                    Cancelar
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -297,24 +299,26 @@ export function CreateProductForm({ categories: initialCategories }: { categorie
                 </button>
               </div>
               {variant.attributes.map((attr, aIndex) => (
-                <div key={aIndex} className="flex gap-2">
-                  <input
-                    placeholder="clave (ej. switch)"
-                    value={attr.key}
-                    onChange={(e) => updateAttribute(vIndex, aIndex, { key: e.target.value })}
-                    className={cn(inputClass, "flex-1")}
-                  />
-                  <input
-                    placeholder="valor (ej. Red)"
-                    value={attr.value}
-                    onChange={(e) => updateAttribute(vIndex, aIndex, { value: e.target.value })}
-                    className={cn(inputClass, "flex-1")}
-                  />
+                <div key={aIndex} className="flex items-start gap-2">
+                  <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+                    <input
+                      placeholder="clave (ej. switch)"
+                      value={attr.key}
+                      onChange={(e) => updateAttribute(vIndex, aIndex, { key: e.target.value })}
+                      className={cn(inputClass, "flex-1")}
+                    />
+                    <input
+                      placeholder="valor (ej. Red)"
+                      value={attr.value}
+                      onChange={(e) => updateAttribute(vIndex, aIndex, { value: e.target.value })}
+                      className={cn(inputClass, "flex-1")}
+                    />
+                  </div>
                   {variant.attributes.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeAttribute(vIndex, aIndex)}
-                      className="text-zinc-500 hover:text-red-400"
+                      className="shrink-0 pt-2 text-zinc-500 hover:text-red-400"
                       aria-label="Quitar atributo"
                     >
                       <Trash2 className="h-4 w-4" />

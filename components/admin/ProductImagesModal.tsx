@@ -98,7 +98,7 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
 
   function ImageGrid({ items }: { items: ProductImage[] }) {
     return (
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {items.map((image) => (
           <div
             key={image.id}

@@ -54,7 +54,7 @@ export function PaymentVerificationActions({ orderId, payment }: { orderId: stri
           monto exacto de la orden.
         </p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button size="sm" disabled={loading !== null} onClick={handleConfirm}>
           {loading === "confirm" ? "Confirmando..." : "Confirmar pago"}
         </Button>

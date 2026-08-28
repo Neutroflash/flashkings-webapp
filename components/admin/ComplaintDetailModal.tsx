@@ -66,7 +66,7 @@ export function ComplaintDetailModal({ complaint, open, onOpenChange }: Complain
             </Dialog.Close>
           </div>
 
-          <div className="mb-5 grid grid-cols-2 gap-3">
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Tipo" value={complaint.type === "RECLAMO" ? "Reclamo" : "Queja"} />
             <Field label="Fecha" value={new Date(complaint.createdAt).toLocaleString("es-PE")} />
             <Field label="Consumidor" value={complaint.fullName} />
