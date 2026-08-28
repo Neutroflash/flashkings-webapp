@@ -43,6 +43,52 @@ export async function updateOrderStatus(
   }
 }
 
+export interface ProductImageInput {
+  url: string;
+  altText?: string;
+  isPrimary?: boolean;
+}
+
+export async function addProductImage(productId: string, data: ProductImageInput): Promise<void> {
+  const res = await fetch(`${API_URL}/products/${productId}/images`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo agregar la imagen");
+  }
+}
+
+export async function updateProductImage(
+  imageId: string,
+  data: Partial<ProductImageInput>,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/products/images/${imageId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo actualizar la imagen");
+  }
+}
+
+export async function deleteProductImage(imageId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/products/images/${imageId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "No se pudo eliminar la imagen");
+  }
+}
+
 async function postAdminAction(path: string): Promise<void> {
   const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include" });
   if (!res.ok) {

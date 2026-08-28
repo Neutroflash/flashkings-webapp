@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PublicProduct } from "@/types/product";
 import { AvailabilityBadge } from "./AvailabilityBadge";
 import { ProductGallery } from "./ProductGallery";
+import { ProductSpecs } from "./ProductSpecs";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
@@ -80,6 +81,10 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
         >
           {added ? "¡Agregado!" : selectedVariant?.inStock ? "Agregar al carrito" : "Agotado"}
         </Button>
+
+        {/* Keyed by variant so the accordion resets to "open" when the customer switches variants
+            (e.g. a different switch type changes what's actually worth showing). */}
+        {selectedVariant && <ProductSpecs key={selectedVariant.id} attributes={selectedVariant.attributes} />}
       </div>
     </div>
   );
