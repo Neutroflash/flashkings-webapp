@@ -20,14 +20,14 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
-        <Link href="/" className="text-xl font-black tracking-tight text-primary">
-          FLASH<span className="text-secondary">KINGS</span>
+    <header className="sticky top-4 z-50 mx-4 sm:mx-auto sm:max-w-7xl sm:px-4">
+      <div className="flex h-16 items-center gap-4 rounded-2xl border border-white/10 bg-black/40 px-4 shadow-lg shadow-black/20 backdrop-blur-xl">
+        <Link href="/" className="text-xl font-black tracking-tight">
+          FLASH<span className="text-gradient-gold">KINGS</span>
         </Link>
 
         <nav className="hidden gap-6 text-sm font-medium md:flex">
-          <Link href="/catalogo" className="text-foreground/80 hover:text-primary">
+          <Link href="/catalogo" className="text-foreground/80 transition-colors hover:text-yellow-400">
             Catálogo
           </Link>
         </nav>
@@ -39,15 +39,21 @@ export function Navbar() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar teclados, mouses, mousepads..."
-              className="h-10 w-full rounded-md border border-border bg-muted pl-9 pr-3 text-sm outline-none focus:border-primary"
+              className="h-10 w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-yellow-500/50"
             />
           </div>
         </form>
 
-        <Button variant="outline" size="icon" className="relative" onClick={openCart} aria-label="Abrir carrito">
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative rounded-full border-white/10 bg-white/5 hover:border-yellow-500/50"
+          onClick={openCart}
+          aria-label="Abrir carrito"
+        >
           <ShoppingCart className="h-5 w-5" />
           {totalItems > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-[10px] font-bold text-black">
               {totalItems}
             </span>
           )}

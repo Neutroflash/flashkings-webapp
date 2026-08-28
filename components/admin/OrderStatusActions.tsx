@@ -63,13 +63,13 @@ export function OrderStatusActions({ orderId, status }: { orderId: string; statu
             value={courier}
             onChange={(e) => setCourier(e.target.value)}
             placeholder="Courier (Olva, Shalom...)"
-            className="h-9 w-48 rounded-md border border-border bg-muted px-2 text-sm"
+            className="h-9 w-48 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50"
           />
           <input
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
             placeholder="Número de seguimiento"
-            className="h-9 w-48 rounded-md border border-border bg-muted px-2 text-sm"
+            className="h-9 w-48 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50"
           />
         </div>
       )}

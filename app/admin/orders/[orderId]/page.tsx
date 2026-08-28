@@ -21,12 +21,12 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
         <Badge>{order.status}</Badge>
       </div>
 
-      <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md sm:grid-cols-2">
         <div>
-          <span className="text-xs uppercase text-muted-foreground">Cliente</span>
-          <p>{order.customerName}</p>
-          <p className="text-sm text-muted-foreground">{order.customerEmail}</p>
-          <p className="text-sm text-muted-foreground">{order.customerPhone}</p>
+          <span className="text-xs uppercase tracking-wide text-zinc-500">Cliente</span>
+          <p className="text-zinc-100">{order.customerName}</p>
+          <p className="text-sm text-zinc-400">{order.customerEmail}</p>
+          <p className="text-sm text-zinc-400">{order.customerPhone}</p>
           <a href={buildWhatsAppLink(order)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
             <Button size="sm" variant="secondary">
               Contactar por WhatsApp
@@ -34,16 +34,16 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           </a>
         </div>
         <div>
-          <span className="text-xs uppercase text-muted-foreground">Envío</span>
-          <p>{order.shippingAddress}</p>
+          <span className="text-xs uppercase tracking-wide text-zinc-500">Envío</span>
+          <p className="text-zinc-100">{order.shippingAddress}</p>
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h2 className="mb-3 font-semibold">Ítems</h2>
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+        <h2 className="mb-3 font-semibold text-zinc-100">Ítems</h2>
         <ul className="flex flex-col gap-2">
           {order.items.map((item) => (
-            <li key={item.id} className="flex justify-between text-sm">
+            <li key={item.id} className="flex justify-between text-sm text-zinc-300">
               <span>
                 {item.productVariant?.name ?? "Producto"} ({item.productVariant?.sku}) x{item.quantity}
               </span>
@@ -51,9 +51,9 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
             </li>
           ))}
         </ul>
-        <div className="mt-4 flex justify-between border-t border-border pt-4 font-bold">
+        <div className="mt-4 flex justify-between border-t border-zinc-800/60 pt-4 font-bold text-zinc-100">
           <span>Total</span>
-          <span className="text-primary">{formatPrice(order.totalAmount)}</span>
+          <span className="text-yellow-400">{formatPrice(order.totalAmount)}</span>
         </div>
       </div>
 

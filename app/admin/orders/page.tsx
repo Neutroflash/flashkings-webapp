@@ -21,8 +21,10 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         <Link
           href="/admin/orders"
           className={cn(
-            "rounded-full border border-border px-3 py-1 text-xs",
-            !searchParams.status && "border-primary bg-primary text-primary-foreground",
+            "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+            !searchParams.status
+              ? "border-yellow-500/50 bg-yellow-400 text-black"
+              : "border-white/10 bg-white/5 text-zinc-400 hover:border-yellow-500/30 hover:text-zinc-100",
           )}
         >
           Todos
@@ -32,8 +34,10 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             key={status}
             href={`/admin/orders?status=${status}`}
             className={cn(
-              "rounded-full border border-border px-3 py-1 text-xs",
-              searchParams.status === status && "border-primary bg-primary text-primary-foreground",
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              searchParams.status === status
+                ? "border-yellow-500/50 bg-yellow-400 text-black"
+                : "border-white/10 bg-white/5 text-zinc-400 hover:border-yellow-500/30 hover:text-zinc-100",
             )}
           >
             {status}

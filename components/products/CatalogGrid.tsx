@@ -1,5 +1,18 @@
+"use client";
+
+import { motion, Variants } from "framer-motion";
 import { PublicProduct } from "@/types/product";
 import { ProductCard } from "./ProductCard";
+
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
 
 export function CatalogGrid({ products }: { products: PublicProduct[] }) {
   if (products.length === 0) {
@@ -7,10 +20,17 @@ export function CatalogGrid({ products }: { products: PublicProduct[] }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+    >
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <motion.div key={product.id} variants={item}>
+          <ProductCard product={product} />
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
