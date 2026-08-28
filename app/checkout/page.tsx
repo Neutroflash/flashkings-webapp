@@ -2,10 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { Check, Copy } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPrice, cn } from "@/lib/utils";
@@ -37,6 +39,7 @@ declare global {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice, clear } = useCartStore();
+  const { data: currentUser } = useCurrentUser();
 
   const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
@@ -56,6 +59,19 @@ export default function CheckoutPage() {
   const [operationNumber, setOperationNumber] = useState("");
   const [submittingManual, setSubmittingManual] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
+
+  // Prefills from the signed-in customer's saved profile, but only into fields the shopper
+  // hasn't already typed into — never overwrites something they're mid-way through editing.
+  useEffect(() => {
+    if (!currentUser || orderId) return;
+    setForm((f) => ({
+      customerName: f.customerName || currentUser.name,
+      customerEmail: f.customerEmail || currentUser.email,
+      customerPhone: f.customerPhone || currentUser.phone || "",
+      shippingAddress: f.shippingAddress || currentUser.defaultAddress || "",
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
   useEffect(() => {
     if (!deadline) return;
@@ -229,6 +245,17 @@ export default function CheckoutPage() {
       />
 
       <h1 className="text-3xl font-bold">Checkout</h1>
+
+      {/* Optional, never blocking — guest checkout stays the default. Hidden once the order
+          exists so it doesn't dangle mid-payment, and once signed in (no point suggesting it twice). */}
+      {!currentUser && !orderId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-800/80 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400">
+          <span>¿Ya tienes cuenta? Inicia sesión para completar tus datos más rápido.</span>
+          <Link href="/cuenta/ingresar?redirect=/checkout" className="font-medium text-yellow-400 hover:underline">
+            Iniciar sesión
+          </Link>
+        </div>
+      )}
 
       {orderId && (
         <div

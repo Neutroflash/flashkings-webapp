@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { getOrderById } from "@/lib/orders";
+import { getSessionUser } from "@/lib/customer-api";
+import { CreateAccountPrompt } from "@/components/account/CreateAccountPrompt";
 import { formatPrice } from "@/lib/utils";
 
 interface ConfirmationPageProps {
@@ -8,7 +10,7 @@ interface ConfirmationPageProps {
 }
 
 export default async function OrderConfirmationPage({ params }: ConfirmationPageProps) {
-  const order = await getOrderById(params.orderId);
+  const [order, sessionUser] = await Promise.all([getOrderById(params.orderId), getSessionUser()]);
   if (!order) notFound();
 
   const isPendingManualVerification = order.payment?.status === "pending_verification";
@@ -56,6 +58,17 @@ export default async function OrderConfirmationPage({ params }: ConfirmationPage
       <p className="text-sm text-muted-foreground">
         Enviaremos actualizaciones a <span className="text-foreground">{order.customerEmail}</span>.
       </p>
+
+      {/* Only offered to a guest checkout — a signed-in customer already has this order linked. */}
+      {!sessionUser && (
+        <div className="w-full rounded-lg border border-zinc-800/80 bg-zinc-900/60 p-5 backdrop-blur-md">
+          <h2 className="mb-1 font-semibold text-zinc-100">Guarda este pedido en una cuenta</h2>
+          <p className="mb-3 text-sm text-zinc-400">
+            Crea una cuenta para ver este pedido y los que hagas después en un solo lugar.
+          </p>
+          <CreateAccountPrompt email={order.customerEmail} name={order.customerName} />
+        </div>
+      )}
     </div>
   );
 }

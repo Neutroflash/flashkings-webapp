@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { Search, ShoppingCart, X } from "lucide-react";
+import { Search, ShoppingCart, User, X } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -13,6 +14,7 @@ export function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const totalItems = useCartStore((state) => state.totalItems());
   const openCart = useCartStore((state) => state.openCart);
+  const { data: currentUser } = useCurrentUser();
 
   function handleSearch(e: FormEvent) {
     e.preventDefault();
@@ -79,6 +81,17 @@ export function Navbar() {
                 />
               </div>
             </form>
+
+            <Link href={currentUser ? "/cuenta" : "/cuenta/ingresar"}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 rounded-full border-white/10 bg-white/5 hover:border-yellow-500/50"
+                aria-label={currentUser ? "Mi cuenta" : "Iniciar sesión"}
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
 
             <Button
               variant="outline"
