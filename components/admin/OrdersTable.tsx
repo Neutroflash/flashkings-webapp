@@ -34,12 +34,19 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             <tr key={order.id} className="border-b border-zinc-800/60 transition-colors hover:bg-white/[0.03]">
               <td className="p-3 text-sm">
                 <Link href={`/admin/orders/${order.id}`} className="font-mono text-xs text-zinc-300 hover:text-yellow-400">
-                  {order.id.slice(0, 8)}...
+                  #{order.id.slice(0, 8)}
                 </Link>
               </td>
               <td className="p-3 text-sm">{order.customerName}</td>
               <td className="p-3">
-                <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
+                  {order.payment?.status === "pending_verification" && (
+                    <Badge variant="outline" className="border-yellow-500/40 text-yellow-400">
+                      Verificar pago
+                    </Badge>
+                  )}
+                </div>
               </td>
               <td className="p-3 text-sm">{formatPrice(order.totalAmount)}</td>
               <td className="p-3 text-sm text-zinc-500">{new Date(order.createdAt).toLocaleString("es-PE")}</td>

@@ -11,16 +11,29 @@ export default async function OrderConfirmationPage({ params }: ConfirmationPage
   const order = await getOrderById(params.orderId);
   if (!order) notFound();
 
+  const isPendingManualVerification = order.payment?.status === "pending_verification";
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 py-12 text-center">
       <CheckCircle2 className="h-16 w-16 text-primary" />
       <h1 className="text-3xl font-bold">
-        {order.status === "PAID" ? "¡Pago confirmado!" : "Pedido registrado"}
+        {order.status === "PAID"
+          ? "¡Pago confirmado!"
+          : isPendingManualVerification
+            ? "Comprobante recibido"
+            : "Pedido registrado"}
       </h1>
       <p className="text-muted-foreground">
         Pedido <span className="font-mono">{order.id}</span> — estado actual:{" "}
         <span className="font-semibold text-foreground">{order.status}</span>
       </p>
+
+      {isPendingManualVerification && (
+        <p className="max-w-md rounded-md border border-secondary bg-secondary/10 px-4 py-3 text-sm text-secondary">
+          Estamos verificando tu transferencia ({order.payment?.provider === "plin" ? "Plin" : "Yape"}, operación{" "}
+          {order.payment?.providerChargeId}). Te avisaremos por correo en cuanto confirmemos el pago.
+        </p>
+      )}
 
       <div className="w-full rounded-lg border border-border bg-card p-6 text-left">
         <h2 className="mb-4 font-semibold">Resumen</h2>

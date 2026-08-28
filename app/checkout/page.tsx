@@ -3,13 +3,25 @@
 import { FormEvent, useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
+import { Check, Copy } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPrice, cn } from "@/lib/utils";
-import { createOrder, chargeOrder } from "@/lib/orders";
+import { createOrder, chargeOrder, submitManualPayment } from "@/lib/orders";
 
 // Mirrors the backend's default STOCK_HOLD_MINUTES — visual aid only, the server enforces the real deadline.
 const HOLD_MINUTES = 15;
+
+// Flashkings' own Yape/Plin account — same source as the floating WhatsApp button's number.
+// A manual transfer isn't tied to Culqi at all, so this doesn't need a "real" merchant QR format
+// (Yape/Plin's own scannable QR is a proprietary bank-network standard we don't have access to) —
+// the phone number is the actually actionable piece; the QR just encodes it for a quick scan.
+const STORE_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE ?? "51999999999";
+const STORE_PHONE_DISPLAY = STORE_PHONE.startsWith("51") ? `+51 ${STORE_PHONE.slice(2)}` : STORE_PHONE;
+
+type PaymentMethod = "card" | "yape_plin";
 
 declare global {
   interface Window {
@@ -30,6 +42,7 @@ export default function CheckoutPage() {
   const { items, totalPrice, clear } = useCartStore();
 
   const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [culqiReady, setCulqiReady] = useState(false);
@@ -40,6 +53,12 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Manual Yape/Plin state
+  const [manualMethod, setManualMethod] = useState<"yape" | "plin">("yape");
+  const [operationNumber, setOperationNumber] = useState("");
+  const [submittingManual, setSubmittingManual] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
 
   useEffect(() => {
     if (!deadline) return;
@@ -82,16 +101,15 @@ export default function CheckoutPage() {
     window.Culqi.open();
   }
 
-  // Auto-opens once an order exists AND the script has actually finished loading (tracked via
-  // <Script onLoad>, not assumed) — calling window.Culqi.open() before the script loads is a
-  // silent no-op (optional chaining swallows it), which was leaving the page on a dead end with
-  // no visible button. The manual "Abrir pago" button below is the fallback if this doesn't fire
-  // (e.g. a popup blocker, or the user closed the modal without paying).
+  // Auto-opens once an order exists (card method only) AND the script has actually finished
+  // loading (tracked via <Script onLoad>, not assumed) — calling window.Culqi.open() before the
+  // script loads is a silent no-op (optional chaining swallows it). The manual "Abrir pago"
+  // button below is the fallback if this doesn't fire (e.g. a popup blocker).
   useEffect(() => {
-    if (!orderId || !publicKey || !culqiReady) return;
+    if (paymentMethod !== "card" || !orderId || !publicKey || !culqiReady) return;
     openCulqiWidget();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, publicKey, culqiReady]);
+  }, [paymentMethod, orderId, publicKey, culqiReady]);
 
   async function handleStartPayment(e: FormEvent) {
     e.preventDefault();
@@ -140,6 +158,28 @@ export default function CheckoutPage() {
     } finally {
       setPaying(false);
     }
+  }
+
+  async function handleSubmitManual(e: FormEvent) {
+    e.preventDefault();
+    if (!orderId) return;
+    setSubmittingManual(true);
+    setError(null);
+    try {
+      await submitManualPayment(orderId, manualMethod, operationNumber.trim());
+      clear();
+      router.push(`/pedido/${orderId}/confirmacion`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo enviar el número de operación");
+    } finally {
+      setSubmittingManual(false);
+    }
+  }
+
+  async function copyPhone() {
+    await navigator.clipboard.writeText(STORE_PHONE_DISPLAY);
+    setPhoneCopied(true);
+    setTimeout(() => setPhoneCopied(false), 1500);
   }
 
   if (items.length === 0 && !orderId) {
@@ -239,6 +279,133 @@ export default function CheckoutPage() {
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Método de pago</label>
+          <Tabs
+            value={paymentMethod}
+            // Locked once the order exists — switching methods mid-flow would leave a reserved
+            // order behind with no way to pay it through the newly-selected tab.
+            onValueChange={(v) => !orderId && setPaymentMethod(v as PaymentMethod)}
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="card" disabled={!!orderId}>
+                Tarjeta
+              </TabsTrigger>
+              <TabsTrigger value="yape_plin" disabled={!!orderId}>
+                Yape / Plin
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="card">
+              {orderId && !publicKey && !paying && (
+                <Button type="button" size="lg" className="w-full" onClick={() => handlePay(`fake_source_${orderId}`)}>
+                  Pagar (modo de prueba)
+                </Button>
+              )}
+
+              {orderId && publicKey && !culqiScriptError && !paying && (
+                <Button type="button" size="lg" className="w-full" disabled={!culqiReady} onClick={openCulqiWidget}>
+                  {culqiReady ? "Abrir pago" : "Cargando pasarela..."}
+                </Button>
+              )}
+
+              {orderId && publicKey && culqiScriptError && !paying && (
+                <div className="flex flex-col items-start gap-2 rounded-md border border-destructive px-4 py-3 text-sm text-destructive">
+                  <p>
+                    No se pudo cargar la pasarela de pago (checkout.culqi.com). Revisa la pestaña Network de tu
+                    navegador, desactiva bloqueadores de anuncios/scripts para ese dominio, o prueba tu conexión.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCulqiScriptError(false);
+                      setScriptRetryKey((k) => k + 1);
+                    }}
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              )}
+
+              {!orderId && (
+                <p className="text-sm text-muted-foreground">
+                  Pago seguro con tarjeta de crédito o débito vía Culqi.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="yape_plin">
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-6 text-center backdrop-blur-md">
+                <QRCodeSVG value={STORE_PHONE_DISPLAY} size={160} bgColor="transparent" fgColor="#facc15" />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">Transfiere el total exacto a</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-2xl font-bold text-yellow-400">{STORE_PHONE_DISPLAY}</span>
+                    <button
+                      type="button"
+                      onClick={copyPhone}
+                      aria-label="Copiar número"
+                      className="text-zinc-500 hover:text-yellow-400"
+                    >
+                      {phoneCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <p className="max-w-sm text-xs text-zinc-500">
+                  Escanea el código o abre tu app de Yape/Plin y transfiere manualmente al número de arriba. Luego
+                  ingresa el número de operación de tu comprobante abajo.
+                </p>
+              </div>
+
+              {orderId && (
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex gap-4 text-sm">
+                    <label className="flex items-center gap-1.5">
+                      <input
+                        type="radio"
+                        name="manualMethod"
+                        checked={manualMethod === "yape"}
+                        onChange={() => setManualMethod("yape")}
+                      />
+                      Pagué con Yape
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <input
+                        type="radio"
+                        name="manualMethod"
+                        checked={manualMethod === "plin"}
+                        onChange={() => setManualMethod("plin")}
+                      />
+                      Pagué con Plin
+                    </label>
+                  </div>
+                  <input
+                    required
+                    value={operationNumber}
+                    onChange={(e) => setOperationNumber(e.target.value)}
+                    placeholder="Número de operación de tu comprobante"
+                    className="h-10 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary"
+                  />
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={submittingManual || operationNumber.trim().length < 4}
+                    onClick={handleSubmitManual}
+                  >
+                    {submittingManual ? "Enviando..." : "Ya transferí, enviar comprobante"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Tu pedido queda reservado. Verificaremos la transferencia y confirmaremos tu pedido — te
+                    avisaremos por correo.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
         <div className="flex items-center justify-between border-t border-border pt-4 text-lg font-bold">
           <span>Total</span>
           <span className="text-primary">{formatPrice(totalPrice())}</span>
@@ -248,38 +415,6 @@ export default function CheckoutPage() {
           <Button type="submit" size="lg" disabled={submitting}>
             {submitting ? "Reservando stock..." : "Iniciar Pago"}
           </Button>
-        )}
-
-        {orderId && !publicKey && !paying && (
-          <Button type="button" size="lg" onClick={() => handlePay(`fake_source_${orderId}`)}>
-            Pagar (modo de prueba)
-          </Button>
-        )}
-
-        {orderId && publicKey && !culqiScriptError && !paying && (
-          <Button type="button" size="lg" disabled={!culqiReady} onClick={openCulqiWidget}>
-            {culqiReady ? "Abrir pago" : "Cargando pasarela..."}
-          </Button>
-        )}
-
-        {orderId && publicKey && culqiScriptError && !paying && (
-          <div className="flex flex-col items-start gap-2 rounded-md border border-destructive px-4 py-3 text-sm text-destructive">
-            <p>
-              No se pudo cargar la pasarela de pago (checkout.culqi.com). Revisa la pestaña Network de tu navegador,
-              desactiva bloqueadores de anuncios/scripts para ese dominio, o prueba tu conexión.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setCulqiScriptError(false);
-                setScriptRetryKey((k) => k + 1);
-              }}
-            >
-              Reintentar
-            </Button>
-          </div>
         )}
       </form>
     </div>

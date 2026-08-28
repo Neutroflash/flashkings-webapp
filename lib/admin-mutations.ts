@@ -42,3 +42,21 @@ export async function updateOrderStatus(
     throw new Error(body.error ?? "No se pudo actualizar el estado de la orden");
   }
 }
+
+async function postAdminAction(path: string): Promise<void> {
+  const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include" });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "La acción no se pudo completar");
+  }
+}
+
+/** Confirms a manual Yape/Plin payment after the admin verifies the transfer in their own app. */
+export function confirmManualPayment(orderId: string): Promise<void> {
+  return postAdminAction(`/admin/orders/${orderId}/confirm-payment`);
+}
+
+/** Rejects a manual Yape/Plin payment claim — releases the held stock instead of leaving it locked. */
+export function rejectManualPayment(orderId: string): Promise<void> {
+  return postAdminAction(`/admin/orders/${orderId}/reject-payment`);
+}

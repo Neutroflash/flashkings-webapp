@@ -3,6 +3,7 @@ import { getAdminOrderById } from "@/lib/admin-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderStatusActions } from "@/components/admin/OrderStatusActions";
+import { PaymentVerificationActions } from "@/components/admin/PaymentVerificationActions";
 import { formatPrice } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
@@ -17,7 +18,7 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Pedido {order.id.slice(0, 8)}...</h1>
+        <h1 className="text-2xl font-bold">Pedido #{order.id.slice(0, 8)}</h1>
         <Badge>{order.status}</Badge>
       </div>
 
@@ -56,6 +57,8 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
           <span className="text-yellow-400">{formatPrice(order.totalAmount)}</span>
         </div>
       </div>
+
+      {order.payment && <PaymentVerificationActions orderId={order.id} payment={order.payment} />}
 
       <OrderStatusActions orderId={order.id} status={order.status} />
     </div>

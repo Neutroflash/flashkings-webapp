@@ -13,6 +13,12 @@ export interface OrderItem {
   };
 }
 
+export interface OrderPayment {
+  provider: string;
+  providerChargeId: string | null;
+  status: string;
+}
+
 export interface Order {
   id: string;
   status: OrderStatus;
@@ -26,6 +32,7 @@ export interface Order {
   cancelledAt: string | null;
   trackingNumber: string | null;
   courier: string | null;
+  payment?: OrderPayment | null;
   createdAt: string;
   items: OrderItem[];
 }

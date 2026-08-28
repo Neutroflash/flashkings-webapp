@@ -44,6 +44,15 @@ export function chargeOrder(orderId: string, sourceId: string): Promise<{ order:
   return apiPost<{ order: Order; status: string }>("/payments/charge", { orderId, sourceId });
 }
 
+/** Manual Yape/Plin: does not mark the order PAID — stays PENDING_PAYMENT until an admin confirms it. */
+export function submitManualPayment(
+  orderId: string,
+  method: "yape" | "plin",
+  operationNumber: string,
+): Promise<{ order: Order }> {
+  return apiPost<{ order: Order }>("/payments/manual", { orderId, method, operationNumber });
+}
+
 /** Server-side fetch for the confirmation page — order status changes, so never ISR-cache it. */
 export async function getOrderById(orderId: string): Promise<Order | null> {
   const res = await fetch(`${API_URL}/orders/${orderId}`, { cache: "no-store" });

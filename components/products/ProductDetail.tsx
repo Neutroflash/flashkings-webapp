@@ -1,16 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import { PublicProduct } from "@/types/product";
 import { AvailabilityBadge } from "./AvailabilityBadge";
+import { ProductGallery } from "./ProductGallery";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 
 export function ProductDetail({ product }: { product: PublicProduct }) {
   const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
@@ -20,7 +19,7 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
   );
 
   const images = product.images ?? [];
-  const activeImage = images[activeImageIndex];
+  const primaryImage = images.find((img) => img.isPrimary) ?? images[0];
 
   function handleAddToCart() {
     if (!selectedVariant) return;
@@ -30,7 +29,7 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
       productName: product.name,
       variantName: selectedVariant.name,
       price: selectedVariant.price,
-      imageUrl: activeImage?.url,
+      imageUrl: primaryImage?.url,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -38,37 +37,7 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
 
   return (
     <div className="grid gap-10 md:grid-cols-2">
-      <div className="flex flex-col gap-3">
-        <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted">
-          {activeImage ? (
-            <Image
-              src={activeImage.url}
-              alt={activeImage.altText ?? product.name}
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">Sin imagen</div>
-          )}
-        </div>
-        {images.length > 1 && (
-          <div className="flex gap-2">
-            {images.map((image, index) => (
-              <button
-                key={image.id}
-                onClick={() => setActiveImageIndex(index)}
-                className={`relative h-16 w-16 overflow-hidden rounded-md border ${
-                  index === activeImageIndex ? "border-primary" : "border-border"
-                }`}
-              >
-                <Image src={image.url} alt={image.altText ?? product.name} fill className="object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductGallery images={images} productName={product.name} categorySlug={product.category?.slug} />
 
       <div className="flex flex-col gap-4">
         <span className="text-sm uppercase tracking-wide text-muted-foreground">{product.brand}</span>

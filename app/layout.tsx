@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { CartHydration } from "@/components/providers/CartHydration";
 import { CartDrawer } from "@/components/cart/CartDrawer";
@@ -34,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartHydration />
           <Navbar />
           <main className="mx-auto min-h-screen max-w-7xl px-4 py-8">{children}</main>
+          <Footer />
           <CartDrawer />
+          <WhatsAppButton />
         </QueryProvider>
       </body>
     </html>
