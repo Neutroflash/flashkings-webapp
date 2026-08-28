@@ -21,7 +21,8 @@ export function AdminSidebar() {
   async function handleLogout() {
     setLoggingOut(true);
     await logoutAdmin();
-    router.push("/login");
+    // Sends to the regular customer login, not back to the admin-only /login form.
+    router.push("/cuenta/ingresar");
     router.refresh();
   }
 
