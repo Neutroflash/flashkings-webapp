@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { useProductSearch } from "@/hooks/useProductSearch";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 
 interface SearchBoxProps {
   variant: "mobile" | "desktop";
@@ -57,7 +57,17 @@ export function SearchBox({ variant, onClose }: SearchBoxProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full sm:max-w-md">
+    <div
+      ref={containerRef}
+      className={cn(
+        "relative",
+        // Desktop is a direct flex-item of the Navbar's row: needs its own flex-1/max-w/ml-auto
+        // to size and position itself, rather than relying on a wrapper div — a wrapper with
+        // flex-1 and this as its only (non-flex) child left it stuck against the wrapper's left
+        // edge instead of filling toward the account/cart icons.
+        variant === "desktop" ? "ml-auto hidden max-w-md flex-1 sm:block" : "w-full",
+      )}
+    >
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

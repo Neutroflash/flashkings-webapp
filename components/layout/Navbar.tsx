@@ -44,9 +44,7 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </button>
 
-            <div className="ml-auto hidden flex-1 sm:flex">
-              <SearchBox variant="desktop" />
-            </div>
+            <SearchBox variant="desktop" />
 
             <Link
               href={currentUser?.role === "ADMIN" ? "/admin" : currentUser ? "/cuenta" : "/cuenta/ingresar"}
