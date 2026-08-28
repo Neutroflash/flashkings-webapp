@@ -20,7 +20,13 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
   );
 
   const images = product.images ?? [];
-  const primaryImage = images.find((img) => img.isPrimary) ?? images[0];
+  // Mirrors ProductGallery's own fallback logic: prefer whatever's actually shown for the
+  // selected variant, so the cart thumbnail matches what the customer was just looking at.
+  const variantImages = images.filter((img) => img.productVariantId === selectedVariantId);
+  const sharedImages = images.filter((img) => img.productVariantId === null);
+  const primaryImage =
+    (variantImages.length > 0 ? variantImages : sharedImages).find((img) => img.isPrimary) ??
+    (variantImages[0] ?? sharedImages[0]);
 
   function handleAddToCart() {
     if (!selectedVariant) return;
@@ -38,7 +44,15 @@ export function ProductDetail({ product }: { product: PublicProduct }) {
 
   return (
     <div className="grid gap-10 md:grid-cols-2">
-      <ProductGallery images={images} productName={product.name} categorySlug={product.category?.slug} />
+      {/* Keyed by variant so ProductGallery's activeIndex/failedIds state resets cleanly when
+          switching variants, instead of pointing at a now-different image set. */}
+      <ProductGallery
+        key={selectedVariantId}
+        images={images}
+        productName={product.name}
+        categorySlug={product.category?.slug}
+        selectedVariantId={selectedVariantId}
+      />
 
       <div className="flex flex-col gap-4">
         <span className="text-sm uppercase tracking-wide text-muted-foreground">{product.brand}</span>

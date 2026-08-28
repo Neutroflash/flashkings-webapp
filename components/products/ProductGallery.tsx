@@ -11,6 +11,9 @@ interface ProductGalleryProps {
   productName: string;
   /** Picks the fallback glyph (keyboard vs mouse) — falls back to keyboard for any other category. */
   categorySlug?: string;
+  /** If the selected variant has its own images, those take over the gallery; otherwise falls
+   * back to the product's shared images (productVariantId: null). */
+  selectedVariantId?: string;
 }
 
 function GalleryFallback({ categorySlug }: { categorySlug?: string }) {
@@ -25,13 +28,17 @@ function GalleryFallback({ categorySlug }: { categorySlug?: string }) {
   );
 }
 
-export function ProductGallery({ images, productName, categorySlug }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, categorySlug, selectedVariantId }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   // Tracks image ids whose network/decode failed (onError), independent of activeIndex, so a
   // thumbnail that failed once stays showing its own fallback glyph instead of a broken image icon.
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
 
-  const activeImage = images[activeIndex];
+  const variantImages = selectedVariantId ? images.filter((img) => img.productVariantId === selectedVariantId) : [];
+  const sharedImages = images.filter((img) => img.productVariantId === null);
+  const galleryImages = variantImages.length > 0 ? variantImages : sharedImages;
+
+  const activeImage = galleryImages[activeIndex];
   const activeFailed = !activeImage || failedIds.has(activeImage.id);
 
   function markFailed(id: string) {
@@ -57,9 +64,9 @@ export function ProductGallery({ images, productName, categorySlug }: ProductGal
         )}
       </div>
 
-      {images.length > 1 && (
+      {galleryImages.length > 1 && (
         <div className="flex gap-2">
-          {images.map((image, index) => {
+          {galleryImages.map((image, index) => {
             const failed = failedIds.has(image.id);
             return (
               <button

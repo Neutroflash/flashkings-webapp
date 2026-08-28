@@ -24,7 +24,10 @@ export function ProductCard({ product }: { product: PublicProduct }) {
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
 
-  const primaryImage = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
+  // The catalog grid never knows about a selected variant, so it can only ever show a shared
+  // image (productVariantId: null) — never one scoped to a specific variant.
+  const sharedImages = product.images?.filter((img) => img.productVariantId === null) ?? [];
+  const primaryImage = sharedImages.find((img) => img.isPrimary) ?? sharedImages[0];
   const cheapestVariant = product.variants.reduce((min, v) => (v.price < min.price ? v : min), product.variants[0]);
   const quickAddVariant = product.variants.find((v) => v.inStock);
   const specs = getSpecHighlights(product);

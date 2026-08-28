@@ -47,6 +47,8 @@ export interface ProductImageInput {
   url: string;
   altText?: string;
   isPrimary?: boolean;
+  /** null = shared image (fallback for any variant with none of its own). */
+  productVariantId?: string | null;
 }
 
 export async function addProductImage(productId: string, data: ProductImageInput): Promise<void> {
