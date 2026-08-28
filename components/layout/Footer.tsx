@@ -24,9 +24,17 @@ export async function Footer() {
           <h3 className="text-sm font-semibold uppercase tracking-wide text-yellow-400/80">Atención al Cliente</h3>
           <ul className="flex flex-col gap-2 text-sm text-zinc-400">
             <li>Envíos a todo el Perú vía Olva Courier y Shalom</li>
-            <li>Política de Garantía</li>
             <li>
-              {/* Requerido por INDECOPI para tiendas online en Perú — la página aún no existe, ver nota de entrega. */}
+              <Link href="/terminos-y-condiciones" className="hover:text-yellow-400">
+                Términos y Condiciones
+              </Link>
+            </li>
+            <li>
+              <Link href="/politica-de-privacidad" className="hover:text-yellow-400">
+                Política de Privacidad
+              </Link>
+            </li>
+            <li>
               <Link href="/libro-de-reclamaciones" className="hover:text-yellow-400">
                 Libro de Reclamaciones
               </Link>
