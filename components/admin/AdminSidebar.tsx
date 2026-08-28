@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { FileWarning, LayoutGrid, LogOut, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutAdmin } from "@/lib/admin-mutations";
+import { useInvalidateCurrentUser } from "@/hooks/useCurrentUser";
 
 const LINKS = [
   { href: "/admin/inventory", label: "Inventario", icon: Package },
@@ -16,11 +17,16 @@ const LINKS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const invalidateCurrentUser = useInvalidateCurrentUser();
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
     setLoggingOut(true);
     await logoutAdmin();
+    // Without this, the Navbar's cached useCurrentUser() query keeps thinking there's still an
+    // ADMIN session — its account icon would go on pointing at /admin (whose own, always-fresh
+    // guard then bounces back to /login) instead of noticing the session is gone.
+    invalidateCurrentUser();
     // Sends to the regular customer login, not back to the admin-only /login form.
     router.push("/cuenta/ingresar");
     router.refresh();
