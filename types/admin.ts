@@ -16,7 +16,9 @@ export interface AdminProduct {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   brand: string;
+  isFeatured: boolean;
   category?: Category;
   images?: ProductImage[];
   variants: AdminProductVariant[];

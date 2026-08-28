@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { getAdminProducts } from "@/lib/admin-api";
+import { getAdminCategories, getAdminProducts } from "@/lib/admin-api";
 import { InventoryTable } from "@/components/admin/InventoryTable";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminInventoryPage() {
-  const products = await getAdminProducts();
+  const [products, categories] = await Promise.all([getAdminProducts(), getAdminCategories()]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,7 +18,7 @@ export default async function AdminInventoryPage() {
           </Button>
         </Link>
       </div>
-      <InventoryTable products={products} />
+      <InventoryTable products={products} categories={categories} />
     </div>
   );
 }

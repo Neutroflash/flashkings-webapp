@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Images } from "lucide-react";
+import { Images, Pencil } from "lucide-react";
 import { AdminProduct } from "@/types/admin";
+import { Category } from "@/types/product";
 import { cn, formatPrice } from "@/lib/utils";
 import { updateProductVariant } from "@/lib/admin-mutations";
 import { triggerRevalidate } from "@/lib/revalidate";
 import { Button } from "@/components/ui/button";
 import { ProductImagesModal } from "./ProductImagesModal";
+import { EditProductModal } from "./EditProductModal";
 
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
@@ -83,8 +85,9 @@ function VariantRow({ productSlug, variant }: { productSlug: string; variant: Ad
   );
 }
 
-function ProductGroup({ product }: { product: AdminProduct }) {
+function ProductGroup({ product, categories }: { product: AdminProduct; categories: Category[] }) {
   const [imagesModalOpen, setImagesModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   return (
     <>
@@ -95,10 +98,16 @@ function ProductGroup({ product }: { product: AdminProduct }) {
               <span className="font-semibold text-zinc-100">{product.name}</span>
               <span className="ml-2 text-xs text-zinc-500">{product.brand}</span>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setImagesModalOpen(true)}>
-              <Images className="mr-1.5 h-3.5 w-3.5" />
-              Imágenes ({product.images?.length ?? 0})
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setEditModalOpen(true)}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Editar
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setImagesModalOpen(true)}>
+                <Images className="mr-1.5 h-3.5 w-3.5" />
+                Imágenes ({product.images?.length ?? 0})
+              </Button>
+            </div>
           </div>
         </td>
       </tr>
@@ -107,11 +116,12 @@ function ProductGroup({ product }: { product: AdminProduct }) {
       ))}
 
       <ProductImagesModal product={product} open={imagesModalOpen} onOpenChange={setImagesModalOpen} />
+      <EditProductModal product={product} categories={categories} open={editModalOpen} onOpenChange={setEditModalOpen} />
     </>
   );
 }
 
-export function InventoryTable({ products }: { products: AdminProduct[] }) {
+export function InventoryTable({ products, categories }: { products: AdminProduct[]; categories: Category[] }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
       <table className="w-full text-left">
@@ -128,7 +138,7 @@ export function InventoryTable({ products }: { products: AdminProduct[] }) {
         </thead>
         <tbody>
           {products.map((product) => (
-            <ProductGroup key={product.id} product={product} />
+            <ProductGroup key={product.id} product={product} categories={categories} />
           ))}
         </tbody>
       </table>

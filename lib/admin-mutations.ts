@@ -91,6 +91,30 @@ export async function deleteProductImage(imageId: string): Promise<void> {
   }
 }
 
+// name/description/brand/categoryId/isFeatured only — slug and variant SKUs are permanently
+// immutable (URL/SEO continuity and inventory-trace continuity, respectively), so the backend
+// doesn't even accept them here.
+export interface UpdateProductInput {
+  name?: string;
+  description?: string;
+  brand?: string;
+  categoryId?: string;
+  isFeatured?: boolean;
+}
+
+export async function updateProduct(productId: string, data: UpdateProductInput): Promise<void> {
+  const res = await fetch(`${API_URL}/products/${productId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo actualizar el producto");
+  }
+}
+
 export interface CreateCategoryInput {
   name: string;
   description?: string;
