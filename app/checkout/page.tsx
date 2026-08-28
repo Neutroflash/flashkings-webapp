@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
 import { Check, Copy } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,6 @@ import { createOrder, chargeOrder, submitManualPayment } from "@/lib/orders";
 const HOLD_MINUTES = 15;
 
 // Flashkings' own Yape/Plin account — same source as the floating WhatsApp button's number.
-// A manual transfer isn't tied to Culqi at all, so this doesn't need a "real" merchant QR format
-// (Yape/Plin's own scannable QR is a proprietary bank-network standard we don't have access to) —
-// the phone number is the actually actionable piece; the QR just encodes it for a quick scan.
 const STORE_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE ?? "51999999999";
 const STORE_PHONE_DISPLAY = STORE_PHONE.startsWith("51") ? `+51 ${STORE_PHONE.slice(2)}` : STORE_PHONE;
 
@@ -338,7 +335,9 @@ export default function CheckoutPage() {
 
             <TabsContent value="yape_plin">
               <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-6 text-center backdrop-blur-md">
-                <QRCodeSVG value={STORE_PHONE_DISPLAY} size={160} bgColor="transparent" fgColor="#facc15" />
+                <div className="overflow-hidden rounded-lg border border-zinc-800/80 bg-white p-2">
+                  <Image src="/yape-plin-qr.jpeg" alt="Código QR de Yape/Plin de Flashkings" width={160} height={160} />
+                </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-zinc-500">Transfiere el total exacto a</p>
                   <div className="mt-1 flex items-center gap-2">
