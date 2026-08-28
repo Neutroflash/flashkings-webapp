@@ -1,54 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { Search, ShoppingCart, User, X } from "lucide-react";
+import { useState } from "react";
+import { Search, ShoppingCart, User } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { SearchBox } from "@/components/layout/SearchBox";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const totalItems = useCartStore((state) => state.totalItems());
   const openCart = useCartStore((state) => state.openCart);
   const { data: currentUser } = useCurrentUser();
 
-  function handleSearch(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = query.trim();
-    router.push(trimmed ? `/catalogo?search=${encodeURIComponent(trimmed)}` : "/catalogo");
-    setMobileSearchOpen(false);
-  }
-
   return (
     <header className="sticky top-4 z-50 mx-4 sm:mx-auto sm:max-w-7xl sm:px-4">
       <div className="flex h-16 items-center gap-3 rounded-2xl border border-white/10 bg-black/40 px-3 shadow-lg shadow-black/20 backdrop-blur-xl sm:gap-4 sm:px-4">
         {mobileSearchOpen ? (
-          // Below sm, the search input takes over the whole bar instead of squeezing in next to
+          // Below sm, the search box takes over the whole bar instead of squeezing in next to
           // the logo/cart — there isn't enough width for both on a narrow phone otherwise.
-          <form onSubmit={handleSearch} className="flex w-full items-center gap-2 sm:hidden">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar productos..."
-                className="h-10 w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-yellow-500/50"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(false)}
-              aria-label="Cerrar búsqueda"
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </form>
+          <div className="flex w-full sm:hidden">
+            <SearchBox variant="mobile" onClose={() => setMobileSearchOpen(false)} />
+          </div>
         ) : (
           <>
             <Link href="/" className="shrink-0 text-xl font-black tracking-tight">
@@ -70,17 +44,9 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </button>
 
-            <form onSubmit={handleSearch} className="ml-auto hidden max-w-md flex-1 items-center gap-2 sm:flex">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar teclados, mouses, mousepads..."
-                  className="h-10 w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-3 text-sm outline-none transition-colors focus:border-yellow-500/50"
-                />
-              </div>
-            </form>
+            <div className="ml-auto hidden flex-1 sm:flex">
+              <SearchBox variant="desktop" />
+            </div>
 
             <Link
               href={currentUser?.role === "ADMIN" ? "/admin" : currentUser ? "/cuenta" : "/cuenta/ingresar"}
