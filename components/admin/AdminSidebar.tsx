@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Package } from "lucide-react";
+import { FileWarning, LayoutGrid, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin/inventory", label: "Inventario", icon: Package },
   { href: "/admin/orders", label: "Pedidos", icon: LayoutGrid },
+  { href: "/admin/complaints", label: "Reclamos", icon: FileWarning },
 ];
 
 export function AdminSidebar() {

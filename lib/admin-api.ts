@@ -3,6 +3,7 @@ import { AdminProduct } from "@/types/admin";
 import { Order, OrderStatus } from "@/types/order";
 import { SafeUser } from "@/types/auth";
 import { Category } from "@/types/product";
+import { AdminComplaint } from "@/types/complaint";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -65,4 +66,9 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
   } catch {
     return null;
   }
+}
+
+export async function getAdminComplaints(): Promise<AdminComplaint[]> {
+  const { complaints } = await adminFetch<{ complaints: AdminComplaint[] }>("/admin/complaints");
+  return complaints;
 }

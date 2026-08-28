@@ -194,3 +194,16 @@ export function confirmManualPayment(orderId: string): Promise<void> {
 export function rejectManualPayment(orderId: string): Promise<void> {
   return postAdminAction(`/admin/orders/${orderId}/reject-payment`);
 }
+
+export async function respondComplaint(complaintId: string, providerResponse: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/complaints/${complaintId}/respond`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ providerResponse }),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo registrar la respuesta");
+  }
+}
