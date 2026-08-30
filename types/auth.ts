@@ -7,4 +7,5 @@ export interface SafeUser {
   phone: string | null;
   defaultAddress: string | null;
   role: Role;
+  emailVerifiedAt: string | null;
 }

@@ -52,6 +52,46 @@ export async function logoutCustomer(): Promise<void> {
   await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
 }
 
+async function parseMessageResponse(res: Response): Promise<string> {
+  const body = (await res.json()) as { message?: string; error?: string };
+  if (!res.ok) {
+    throw new Error(body.error ?? "No se pudo completar la solicitud");
+  }
+  return body.message ?? "";
+}
+
+export async function forgotPassword(email: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return parseMessageResponse(res);
+}
+
+export async function resetPassword(token: string, password: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  return parseMessageResponse(res);
+}
+
+export async function verifyEmail(token: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/verify-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  return parseMessageResponse(res);
+}
+
+export async function resendVerification(): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/resend-verification`, { method: "POST", credentials: "include" });
+  return parseMessageResponse(res);
+}
+
 /** Returns null for an anonymous visitor — never throws, so callers don't need a try/catch. */
 export async function getCurrentUser(): Promise<SafeUser | null> {
   const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });

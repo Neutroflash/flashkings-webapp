@@ -3,6 +3,7 @@ import { getMyOrdersServer, getSessionUser } from "@/lib/customer-api";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { MyOrdersList } from "@/components/account/MyOrdersList";
+import { EmailVerificationBanner } from "@/components/account/EmailVerificationBanner";
 
 // Server Component auth guard — mirrors app/admin/layout.tsx's pattern, but for any authenticated
 // user (not just ADMIN). Real enforcement stays on the backend (authenticateJWT on
@@ -29,6 +30,8 @@ export default async function CuentaPage() {
         </div>
         <LogoutButton />
       </div>
+
+      {!user.emailVerifiedAt && <EmailVerificationBanner email={user.email} />}
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-zinc-100">Mis pedidos</h2>

@@ -65,6 +65,9 @@ function IngresarForm() {
             onChange={(e) => setPassword(e.target.value)}
             className={inputClass}
           />
+          <Link href="/cuenta/olvide-password" className="mt-1 self-end text-xs text-zinc-500 hover:text-yellow-400 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <Button type="submit" disabled={loading} className="mt-2">
