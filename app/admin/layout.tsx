@@ -11,9 +11,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="grid gap-8 md:grid-cols-[200px_1fr]">
-      <AdminSidebar />
-      <div className="min-w-0">{children}</div>
+    <div className="grid gap-8 md:grid-cols-[200px_1fr] print:block print:gap-0">
+      <div className="print:hidden">
+        <AdminSidebar />
+      </div>
+      <div className="min-w-0 print:w-full">{children}</div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Order, OrderStatus } from "@/types/order";
 import { SafeUser } from "@/types/auth";
 import { Category } from "@/types/product";
 import { AdminComplaint } from "@/types/complaint";
+import { TicketComprobanteData } from "@/types/ticket";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
@@ -63,6 +64,16 @@ export async function getAdminOrderById(orderId: string): Promise<Order | null> 
   try {
     const { order } = await adminFetch<{ order: Order }>(`/admin/orders/${orderId}`);
     return order;
+  } catch {
+    return null;
+  }
+}
+
+/** `null` si el comprobante no existe o todavía no está ISSUED (SUNAT no respondió / rechazó) —
+ * ver GetInvoiceTicketDataUseCase en el backend, que lanza en esos casos. */
+export async function getInvoiceTicketData(orderId: string): Promise<TicketComprobanteData | null> {
+  try {
+    return await adminFetch<TicketComprobanteData>(`/admin/orders/${orderId}/invoice/ticket-data`);
   } catch {
     return null;
   }

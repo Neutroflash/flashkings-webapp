@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Script src="https://checkout.culqi.com/js/v4" strategy="afterInteractive" />
           <CartHydration />
           <Navbar />
-          <main className="mx-auto min-h-screen max-w-7xl px-4 py-8">{children}</main>
+          <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 print:max-w-none print:p-0">{children}</main>
           <Footer />
           <CartDrawer />
           <WhatsAppButton />

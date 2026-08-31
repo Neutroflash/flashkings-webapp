@@ -61,3 +61,14 @@
     animation: shimmer 1.4s ease-in-out infinite;
   }
 }
+
+/* Chrome del sitio (Navbar/Footer/WhatsApp flotante, ver app/layout.tsx) nunca debería salir en
+   una impresión de ninguna página — no solo el ticket de comprobante. Global a propósito, en vez
+   de repetir print:hidden en cada consumidor. */
+@media print {
+  body > header,
+  body > footer,
+  #whatsapp-float-button {
+    display: none !important;
+  }
+}

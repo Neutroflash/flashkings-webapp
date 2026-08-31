@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { InvoiceType, Order } from "@/types/order";
 import { issueInvoice } from "@/lib/admin-mutations";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,10 @@ import { cn } from "@/lib/utils";
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
 
-// Emisión manual: el negocio aún no está registrado como emisor electrónico ante SUNAT, así que
-// esto no ocurre automáticamente al confirmarse el pago — ver IInvoicingGateway en el backend.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+
+// Emisión manual (ADMIN decide cuándo emitir, no ocurre automáticamente al confirmarse el pago) —
+// integración real con SUNAT vía SunatInvoicingGateway, ver IInvoicingGateway en el backend.
 export function InvoiceSection({ order }: { order: Order }) {
   const router = useRouter();
   const [type, setType] = useState<InvoiceType>("BOLETA");
@@ -35,10 +38,24 @@ export function InvoiceSection({ order }: { order: Order }) {
           {inv.documentType} {inv.documentNumber}
           {inv.businessName ? ` · ${inv.businessName}` : ""}
         </p>
-        {inv.pdfUrl && (
-          <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-yellow-400 hover:underline">
-            Ver PDF
-          </a>
+        {inv.status === "PENDING_SUNAT" && (
+          <p className="mt-2 text-sm text-amber-400">SUNAT no respondió — reintentando automáticamente.</p>
+        )}
+        {inv.status === "FAILED" && <p className="mt-2 text-sm text-red-400">SUNAT rechazó el comprobante.</p>}
+        {inv.status === "ISSUED" && (
+          <div className="mt-2 flex flex-wrap gap-3 text-sm">
+            <Link href={`/admin/orders/${order.id}/ticket`} className="text-yellow-400 hover:underline">
+              Ver ticket
+            </Link>
+            <a
+              href={`${API_URL}/admin/orders/${order.id}/invoice/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-yellow-400 hover:underline"
+            >
+              Descargar PDF
+            </a>
+          </div>
         )}
       </div>
     );

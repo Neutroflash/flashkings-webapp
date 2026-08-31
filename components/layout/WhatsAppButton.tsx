@@ -15,6 +15,7 @@ export function WhatsAppButton() {
 
   return (
     <a
+      id="whatsapp-float-button"
       href={href}
       target="_blank"
       rel="noopener noreferrer"

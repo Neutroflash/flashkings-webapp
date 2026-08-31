@@ -24,7 +24,7 @@ export type InvoiceType = "BOLETA" | "FACTURA";
 export interface OrderInvoice {
   id: string;
   type: InvoiceType;
-  status: "ISSUED" | "FAILED" | "VOID";
+  status: "PENDING_SUNAT" | "ISSUED" | "FAILED" | "VOID";
   series: string;
   number: number;
   documentType: string;
