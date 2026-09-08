@@ -1,6 +1,7 @@
-import { InvoiceType, OrderInvoice, OrderStatus } from "@/types/order";
+import { InvoiceType, Order, OrderInvoice, OrderStatus, Refund, RefundReason } from "@/types/order";
+import { AdminCategory, AdminProductVariant } from "@/types/admin";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { CLIENT_API_URL as API_URL } from "@/lib/api-url";
 
 // Client-safe: no next/headers import, so this can be imported from "use client" components
 // (InventoryTable/OrderStatusActions) — the browser sends cookies automatically via credentials: "include".
@@ -13,7 +14,7 @@ export async function logoutAdmin(): Promise<void> {
 
 export async function updateProductVariant(
   variantId: string,
-  data: { price?: number; costPrice?: number; stock?: number },
+  data: { price?: number; costPrice?: number; stock?: number; isActive?: boolean },
 ): Promise<void> {
   const res = await fetch(`${API_URL}/products/variants/${variantId}`, {
     method: "PATCH",
@@ -220,6 +221,185 @@ export async function issueInvoice(orderId: string, data: IssueInvoiceInput): Pr
     throw new Error(body.error ?? "No se pudo emitir el comprobante");
   }
   return body.invoice;
+}
+
+export interface RefundOrderInput {
+  /** Omitido = se devuelve todo el saldo pendiente de la orden. */
+  amount?: number;
+  items?: { orderItemId: string; quantity: number }[];
+  reasonCode: string;
+  reasonText?: string;
+  isManual?: boolean;
+  restock?: boolean;
+  /** Devolver también el flete. Si se omite, el servidor lo sugiere según el motivo. */
+  refundShipping?: boolean;
+}
+
+export async function refundOrder(orderId: string, data: RefundOrderInput): Promise<{ refund: Refund; order: Order }> {
+  const res = await fetch(`${API_URL}/admin/orders/${orderId}/refund`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const body = (await res.json()) as { refund?: Refund; order?: Order; error?: string };
+  if (!res.ok || !body.refund || !body.order) {
+    throw new Error(body.error ?? "No se pudo registrar el reembolso");
+  }
+  return { refund: body.refund, order: body.order };
+}
+
+/** Emite ante SUNAT la nota de crédito que documenta un reembolso ya hecho. */
+export async function issueCreditNote(refundId: string): Promise<OrderInvoice> {
+  const res = await fetch(`${API_URL}/admin/orders/refunds/${refundId}/credit-note`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const body = (await res.json()) as { invoice?: OrderInvoice; error?: string };
+  if (!res.ok || !body.invoice) {
+    throw new Error(body.error ?? "No se pudo emitir la nota de crédito");
+  }
+  return body.invoice;
+}
+
+/** Catálogo 09 de SUNAT, servido por el backend para no duplicarlo acá. */
+export async function fetchRefundReasons(): Promise<RefundReason[]> {
+  const res = await fetch(`${API_URL}/admin/orders/refunds/reasons`, { credentials: "include" });
+  if (!res.ok) return [];
+  const body = (await res.json()) as { reasons?: RefundReason[] };
+  return body.reasons ?? [];
+}
+
+/** Baja/alta lógica de un producto. Un producto con ventas no se puede borrar — se desactiva. */
+export async function setProductActive(productId: string, isActive: boolean): Promise<void> {
+  const res = await fetch(`${API_URL}/products/${productId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ isActive }),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo cambiar el estado del producto");
+  }
+}
+
+export async function setVariantActive(variantId: string, isActive: boolean): Promise<void> {
+  await updateProductVariant(variantId, { isActive });
+}
+
+/** Borra de verdad. Solo funciona si nunca se vendió; si tiene ventas devuelve 409. */
+export async function deleteProduct(productId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/products/${productId}`, { method: "DELETE", credentials: "include" });
+  if (!res.ok && res.status !== 204) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "No se pudo borrar el producto");
+  }
+}
+
+export interface AddVariantInput {
+  sku: string;
+  name: string;
+  price: number;
+  costPrice: number;
+  stock: number;
+  attributes?: Record<string, unknown>;
+}
+
+export async function addProductVariant(productId: string, data: AddVariantInput): Promise<AdminProductVariant> {
+  const res = await fetch(`${API_URL}/products/${productId}/variants`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  const body = (await res.json()) as { variant?: AdminProductVariant; error?: string };
+  if (!res.ok || !body.variant) {
+    throw new Error(body.error ?? "No se pudo agregar la variante");
+  }
+  return body.variant;
+}
+
+export async function deleteProductVariant(variantId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/products/variants/${variantId}`, { method: "DELETE", credentials: "include" });
+  if (!res.ok && res.status !== 204) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "No se pudo borrar la variante");
+  }
+}
+
+export async function fetchAdminCategories(): Promise<AdminCategory[]> {
+  const res = await fetch(`${API_URL}/categories/admin`, { credentials: "include" });
+  if (!res.ok) return [];
+  const body = (await res.json()) as { categories?: AdminCategory[] };
+  return body.categories ?? [];
+}
+
+export async function updateCategory(
+  id: string,
+  data: { name?: string; description?: string | null },
+): Promise<void> {
+  const res = await fetch(`${API_URL}/categories/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "No se pudo actualizar la categoría");
+  }
+}
+
+/** Solo categorías vacías. Con productos devuelve 409 pidiendo reasignarlos primero. */
+export async function deleteCategory(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/categories/${id}`, { method: "DELETE", credentials: "include" });
+  if (!res.ok && res.status !== 204) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "No se pudo borrar la categoría");
+  }
+}
+
+export interface UploadSignature {
+  cloudName: string;
+  apiKey: string;
+  timestamp: number;
+  folder: string;
+  signature: string;
+}
+
+/**
+ * Sube una imagen DIRECTO a Cloudinary: el backend solo firma la operación, el archivo nunca pasa
+ * por él. Es deliberado — hacer de intermediario de subidas en un servicio de 512 MB de RAM es la
+ * forma más rápida de tumbarlo.
+ */
+export async function uploadProductImage(file: File): Promise<string> {
+  const sigRes = await fetch(`${API_URL}/products/images/upload-signature`, { credentials: "include" });
+  if (!sigRes.ok) {
+    const body = (await sigRes.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "No se pudo preparar la subida");
+  }
+  const sig = (await sigRes.json()) as UploadSignature;
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", sig.apiKey);
+  form.append("timestamp", String(sig.timestamp));
+  form.append("folder", sig.folder);
+  form.append("signature", sig.signature);
+
+  const upload = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, {
+    method: "POST",
+    body: form,
+  });
+  if (!upload.ok) {
+    throw new Error("Cloudinary rechazó la imagen");
+  }
+  const result = (await upload.json()) as { secure_url?: string };
+  if (!result.secure_url) {
+    throw new Error("Cloudinary no devolvió una URL");
+  }
+  return result.secure_url;
 }
 
 export async function respondComplaint(complaintId: string, providerResponse: string): Promise<void> {

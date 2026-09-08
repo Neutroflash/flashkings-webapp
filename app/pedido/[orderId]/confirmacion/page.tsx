@@ -14,16 +14,21 @@ export default async function OrderConfirmationPage({ params }: ConfirmationPage
   if (!order) notFound();
 
   const isPendingManualVerification = order.payment?.status === "pending_verification";
+  // Solo los reembolsos que ya salieron: uno que la pasarela rechazó todavía no le llegó al cliente.
+  const refunds = (order.refunds ?? []).filter((r) => r.status !== "FAILED");
+  const refundedTotal = refunds.reduce((sum, r) => sum + r.amount, 0);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 py-12 text-center">
       <CheckCircle2 className="h-16 w-16 text-primary" />
       <h1 className="text-3xl font-bold">
-        {order.status === "PAID"
-          ? "¡Pago confirmado!"
-          : isPendingManualVerification
-            ? "Comprobante recibido"
-            : "Pedido registrado"}
+        {order.status === "REFUNDED"
+          ? "Pedido devuelto"
+          : order.status === "PAID"
+            ? "¡Pago confirmado!"
+            : isPendingManualVerification
+              ? "Comprobante recibido"
+              : "Pedido registrado"}
       </h1>
       <p className="text-muted-foreground">
         Pedido <span className="font-mono">{order.id}</span> — estado actual:{" "}
@@ -35,6 +40,26 @@ export default async function OrderConfirmationPage({ params }: ConfirmationPage
           Estamos verificando tu transferencia ({order.payment?.provider === "plin" ? "Plin" : "Yape"}, operación{" "}
           {order.payment?.providerChargeId}). Te avisaremos por correo en cuanto confirmemos el pago.
         </p>
+      )}
+
+      {refunds.length > 0 && (
+        <div className="w-full rounded-lg border border-border bg-card p-6 text-left">
+          <h2 className="mb-3 font-semibold">
+            {refundedTotal >= order.totalAmount ? "Devolución" : "Devolución parcial"}
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {refunds.map((refund) => (
+              <li key={refund.id} className="flex justify-between gap-4 text-sm">
+                <span className="text-muted-foreground">{refund.reasonText}</span>
+                <span className="whitespace-nowrap font-semibold">{formatPrice(refund.amount)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            El dinero vuelve al mismo medio de pago con el que compraste. Según tu banco, puede tardar unos días
+            hábiles en reflejarse.
+          </p>
+        </div>
       )}
 
       <div className="w-full rounded-lg border border-border bg-card p-6 text-left">
@@ -49,6 +74,12 @@ export default async function OrderConfirmationPage({ params }: ConfirmationPage
             </li>
           ))}
         </ul>
+        {order.shippingCost > 0 && (
+          <div className="mt-4 flex justify-between border-t border-border pt-4 text-sm text-muted-foreground">
+            <span>Envío{order.shippingDistrict ? ` — ${order.shippingDistrict}` : ""}</span>
+            <span>{formatPrice(order.shippingCost)}</span>
+          </div>
+        )}
         <div className="mt-4 flex justify-between border-t border-border pt-4 font-bold">
           <span>Total</span>
           <span className="text-primary">{formatPrice(order.totalAmount)}</span>

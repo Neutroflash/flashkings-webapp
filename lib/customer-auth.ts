@@ -1,7 +1,7 @@
 import { SafeUser } from "@/types/auth";
 import { Order } from "@/types/order";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { CLIENT_API_URL as API_URL } from "@/lib/api-url";
 
 // Client-safe: used from the Navbar, checkout, and /cuenta — all client components. Cookies
 // travel via credentials: "include", never a token in JS-readable storage.

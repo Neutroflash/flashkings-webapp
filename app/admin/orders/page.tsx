@@ -4,7 +4,15 @@ import { OrdersTable } from "@/components/admin/OrdersTable";
 import { OrderStatus } from "@/types/order";
 import { cn } from "@/lib/utils";
 
-const STATUSES: OrderStatus[] = ["PENDING_PAYMENT", "PAID", "IN_PREPARATION", "SHIPPED", "DELIVERED", "CANCELLED"];
+const STATUSES: OrderStatus[] = [
+  "PENDING_PAYMENT",
+  "PAID",
+  "IN_PREPARATION",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+  "REFUNDED",
+];
 
 interface AdminOrdersPageProps {
   searchParams: { status?: OrderStatus };

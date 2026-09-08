@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { SafeUser } from "@/types/auth";
 import { Order } from "@/types/order";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { SERVER_API_URL as API_URL } from "@/lib/api-url";
 
 /**
  * Server Component fetch helper for the customer account area — same reasoning as

@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   SHIPPED: "Enviado",
   DELIVERED: "Entregado",
   CANCELLED: "Cancelado",
+  REFUNDED: "Reembolsado",
 };
 
 const STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "success" | "destructive" | "outline"> = {
@@ -19,6 +20,7 @@ const STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "success" | 
   SHIPPED: "default",
   DELIVERED: "success",
   CANCELLED: "destructive",
+  REFUNDED: "destructive",
 };
 
 export function MyOrdersList({ orders }: { orders: Order[] }) {

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FileWarning, LayoutGrid, LogOut, Package } from "lucide-react";
+import { FileWarning, LayoutGrid, LogOut, Package, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logoutAdmin } from "@/lib/admin-mutations";
 import { useInvalidateCurrentUser } from "@/hooks/useCurrentUser";
 
 const LINKS = [
   { href: "/admin/inventory", label: "Inventario", icon: Package },
+  { href: "/admin/categories", label: "Categorías", icon: Tags },
   { href: "/admin/orders", label: "Pedidos", icon: LayoutGrid },
   { href: "/admin/complaints", label: "Reclamos", icon: FileWarning },
 ];

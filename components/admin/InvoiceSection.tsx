@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const inputClass =
   "h-9 rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-zinc-100 outline-none transition-colors focus:border-yellow-500/50";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { CLIENT_API_URL as API_URL } from "@/lib/api-url";
 
 // Emisión manual (ADMIN decide cuándo emitir, no ocurre automáticamente al confirmarse el pago) —
 // integración real con SUNAT vía SunatInvoicingGateway, ver IInvoicingGateway en el backend.

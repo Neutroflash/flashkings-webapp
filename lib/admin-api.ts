@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
-import { AdminProduct } from "@/types/admin";
+import { AdminCategory, AdminProduct } from "@/types/admin";
 import { Order, OrderStatus } from "@/types/order";
 import { SafeUser } from "@/types/auth";
 import { Category } from "@/types/product";
 import { AdminComplaint } from "@/types/complaint";
 import { TicketComprobanteData } from "@/types/ticket";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { SERVER_API_URL as API_URL } from "@/lib/api-url";
 
 /**
  * Server Component fetch helper for admin data. Next's server-side `fetch` does not
@@ -45,6 +45,12 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
 
 export async function getAdminCategories(): Promise<Category[]> {
   const { categories } = await adminFetch<{ categories: Category[] }>("/categories");
+  return categories;
+}
+
+/** Con el conteo de productos de cada una, para saber cuáles se pueden borrar. */
+export async function getAdminCategoriesWithCounts(): Promise<AdminCategory[]> {
+  const { categories } = await adminFetch<{ categories: AdminCategory[] }>("/categories/admin");
   return categories;
 }
 
