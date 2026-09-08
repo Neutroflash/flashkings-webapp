@@ -7,7 +7,7 @@ import Image from "next/image";
 import { ImagePlus, Star, Trash2, X } from "lucide-react";
 import { AdminProduct } from "@/types/admin";
 import { ProductImage } from "@/types/product";
-import { addProductImage, deleteProductImage, updateProductImage } from "@/lib/admin-mutations";
+import { addProductImage, deleteProductImage, updateProductImage, uploadProductImage } from "@/lib/admin-mutations";
 import { triggerRevalidate } from "@/lib/revalidate";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
   const [submitting, setSubmitting] = useState(false);
   const [busyImageId, setBusyImageId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const images = product.images ?? [];
   const sharedImages = images.filter((img) => img.productVariantId === null);
@@ -181,7 +182,34 @@ export function ProductImagesModal({ product, open, onOpenChange }: ProductImage
           </div>
 
           <form onSubmit={handleAdd} className="flex flex-col gap-2 border-t border-zinc-800/60 pt-4">
-            <label className="text-xs uppercase tracking-wide text-zinc-500">Agregar imagen por URL</label>
+            <label className="text-xs uppercase tracking-wide text-zinc-500">Subir imagen</label>
+            {/* El archivo va DIRECTO del navegador a Cloudinary: el backend solo firma la
+                operación y nunca recibe los bytes — ver uploadProductImage. Lo que vuelve es la
+                URL, que es lo que se guarda, así que pegar una URL a mano sigue funcionando. */}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={uploading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setError(null);
+                setUploading(true);
+                try {
+                  setUrl(await uploadProductImage(file));
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "No se pudo subir la imagen");
+                } finally {
+                  setUploading(false);
+                  e.target.value = "";
+                }
+              }}
+              className="text-sm text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-yellow-500/10 file:px-3 file:py-2 file:text-sm file:text-yellow-400 hover:file:bg-yellow-500/20 disabled:opacity-50"
+            />
+            {uploading && <p className="text-xs text-zinc-400">Subiendo…</p>}
+            <label className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
+              O pegar una URL
+            </label>
             <input
               required
               type="url"

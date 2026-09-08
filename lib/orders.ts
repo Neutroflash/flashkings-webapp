@@ -11,7 +11,32 @@ export interface CheckoutFormInput {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  /** Calle y referencia. La ubicación que tarifa el envío son los tres campos siguientes. */
   shippingAddress: string;
+  shippingDepartment: string;
+  shippingProvince: string;
+  shippingDistrict: string;
+}
+
+export interface ShippingQuote {
+  zone: "LIMA_METROPOLITANA" | "PROVINCIA";
+  cost: number;
+}
+
+/** Cotiza el flete para mostrarlo antes de pagar. El servidor lo vuelve a calcular al crear la
+ * orden — esto es solo para que el cliente vea el total real mientras llena el formulario. */
+export async function quoteShipping(department: string, province: string): Promise<ShippingQuote | null> {
+  const params = new URLSearchParams({ department, province });
+  const res = await fetch(`${API_URL}/orders/shipping/quote?${params.toString()}`);
+  if (!res.ok) return null;
+  return (await res.json()) as ShippingQuote;
+}
+
+export async function fetchDepartments(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/orders/shipping/departments`);
+  if (!res.ok) return [];
+  const body = (await res.json()) as { departments?: string[] };
+  return body.departments ?? [];
 }
 
 /** Client-side POST helper — sends cookies (credentials: include) so a logged-in user's order links to their account. */

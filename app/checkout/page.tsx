@@ -11,7 +11,14 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPrice, cn } from "@/lib/utils";
-import { createOrder, chargeOrder, submitManualPayment } from "@/lib/orders";
+import {
+  createOrder,
+  chargeOrder,
+  fetchDepartments,
+  quoteShipping,
+  submitManualPayment,
+  type ShippingQuote,
+} from "@/lib/orders";
 
 // Mirrors the backend's default STOCK_HOLD_MINUTES — visual aid only, the server enforces the real deadline.
 const HOLD_MINUTES = 15;
@@ -41,7 +48,20 @@ export default function CheckoutPage() {
   const { items, totalPrice, clear } = useCartStore();
   const { data: currentUser } = useCurrentUser();
 
-  const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", shippingAddress: "" });
+  const [form, setForm] = useState({
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    shippingAddress: "",
+    shippingDepartment: "",
+    shippingProvince: "",
+    shippingDistrict: "",
+  });
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuote | null>(null);
+  // Monto autoritativo devuelto por el servidor al crear la orden. Mientras es null se muestra la
+  // estimación del carrito; a partir de la orden, manda este.
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -60,11 +80,34 @@ export default function CheckoutPage() {
   const [submittingManual, setSubmittingManual] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
 
+  useEffect(() => {
+    void fetchDepartments().then(setDepartments);
+  }, []);
+
+  // Cotiza cada vez que cambia el destino, para que el total de arriba no mienta mientras el
+  // cliente llena el formulario. La tarifa que se cobra es la que recalcula el servidor.
+  useEffect(() => {
+    if (!form.shippingDepartment || form.shippingProvince.trim().length < 2) {
+      setShippingQuote(null);
+      return;
+    }
+    let cancelled = false;
+    void quoteShipping(form.shippingDepartment, form.shippingProvince).then((quote) => {
+      if (!cancelled) setShippingQuote(quote);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.shippingDepartment, form.shippingProvince]);
+
   // Prefills from the signed-in customer's saved profile, but only into fields the shopper
   // hasn't already typed into — never overwrites something they're mid-way through editing.
   useEffect(() => {
     if (!currentUser || orderId) return;
     setForm((f) => ({
+      // El spread mantiene los campos de ubicación, que el perfil no guarda todavía — sin él, el
+      // prefill borraría el departamento/provincia/distrito que el cliente acabara de elegir.
+      ...f,
       customerName: f.customerName || currentUser.name,
       customerEmail: f.customerEmail || currentUser.email,
       customerPhone: f.customerPhone || currentUser.phone || "",
@@ -112,7 +155,9 @@ export default function CheckoutPage() {
   function openCulqiWidget() {
     if (!publicKey || !window.Culqi) return;
     window.Culqi.publicKey = publicKey;
-    window.Culqi.settings({ title: "Flashkings", currency: "PEN", amount: Math.round(totalPrice() * 100) });
+    // El monto lo fija el servidor al crear la orden (incluye el flete tarifado allá). Recalcularlo
+    // acá sumando el carrito cobraría de menos: el navegador no conoce la tarifa de envío.
+    window.Culqi.settings({ title: "Flashkings", currency: "PEN", amount: Math.round((serverTotal ?? 0) * 100) });
     // Culqi renders its own modal outside React's control (injected straight into the DOM), so
     // it never closes on its own once the user submits a card inside it — not even once we
     // navigate away client-side. We close it explicitly the moment we get a result back, then
@@ -154,6 +199,7 @@ export default function CheckoutPage() {
         items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
       );
       setOrderId(response.orderId);
+      setServerTotal(response.totalAmount);
       setPublicKey(response.publicKey || null);
       setDeadline(Date.now() + HOLD_MINUTES * 60 * 1000);
     } catch (err) {
@@ -181,6 +227,7 @@ export default function CheckoutPage() {
       } else if (result.status === "failed") {
         setError("El pago fue rechazado. Vuelve a intentarlo o usa otro método.");
         setOrderId(null);
+        setServerTotal(null);
         setDeadline(null);
       } else {
         setError("El pago quedó pendiente de confirmación (Yape/Plin). Te avisaremos cuando se confirme.");
@@ -316,10 +363,51 @@ export default function CheckoutPage() {
           <input
             required
             disabled={!!orderId}
+            placeholder="Calle, número, referencia"
             value={form.shippingAddress}
             onChange={(e) => setForm((f) => ({ ...f, shippingAddress: e.target.value }))}
             className="h-10 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
           />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-1">
+            <label className="text-sm font-medium">Departamento</label>
+            <select
+              required
+              disabled={!!orderId}
+              value={form.shippingDepartment}
+              onChange={(e) => setForm((f) => ({ ...f, shippingDepartment: e.target.value }))}
+              className="h-10 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
+            >
+              <option value="">Selecciona…</option>
+              {departments.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-medium">Provincia</label>
+            <input
+              required
+              disabled={!!orderId}
+              value={form.shippingProvince}
+              onChange={(e) => setForm((f) => ({ ...f, shippingProvince: e.target.value }))}
+              className="h-10 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-sm font-medium">Distrito</label>
+            <input
+              required
+              disabled={!!orderId}
+              value={form.shippingDistrict}
+              onChange={(e) => setForm((f) => ({ ...f, shippingDistrict: e.target.value }))}
+              className="h-10 rounded-md border border-border bg-muted px-3 text-sm outline-none focus:border-primary disabled:opacity-60"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -451,9 +539,23 @@ export default function CheckoutPage() {
           </Tabs>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border pt-4 text-lg font-bold">
-          <span>Total</span>
-          <span className="text-primary">{formatPrice(totalPrice())}</span>
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Productos</span>
+            <span>{formatPrice(totalPrice())}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Envío{shippingQuote?.zone === "PROVINCIA" ? " (provincia)" : shippingQuote ? " (Lima)" : ""}</span>
+            <span>
+              {shippingQuote ? formatPrice(shippingQuote.cost) : "Elige tu destino"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-lg font-bold">
+            <span>Total</span>
+            <span className="text-primary">
+              {formatPrice(serverTotal ?? totalPrice() + (shippingQuote?.cost ?? 0))}
+            </span>
+          </div>
         </div>
 
         {!orderId && (

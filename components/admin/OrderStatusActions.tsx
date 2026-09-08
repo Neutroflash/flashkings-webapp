@@ -21,6 +21,7 @@ const LABELS: Record<OrderStatus, string> = {
   SHIPPED: "Marcar como entregado",
   DELIVERED: "Entregado",
   CANCELLED: "Cancelado",
+  REFUNDED: "Reembolsado",
 };
 
 export function OrderStatusActions({ orderId, status }: { orderId: string; status: OrderStatus }) {

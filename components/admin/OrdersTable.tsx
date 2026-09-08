@@ -10,6 +10,7 @@ const STATUS_VARIANT: Record<Order["status"], "default" | "secondary" | "success
   SHIPPED: "default",
   DELIVERED: "success",
   CANCELLED: "destructive",
+  REFUNDED: "destructive",
 };
 
 export function OrdersTable({ orders }: { orders: Order[] }) {

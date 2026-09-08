@@ -6,6 +6,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://flashkings.pe";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // pageSize large enough to cover the whole catalog in one request — fine at this scale;
   // would need pagination across multiple sitemap files well before this becomes a bottleneck.
+  //
+  // Esta llamada va sin sesión, así que la API devuelve solo productos activos (ver
+  // GetProductsUseCase): un producto desactivado sale del sitemap solo, sin filtrar acá.
+  // Importa que siga siendo anónima — con cookie de ADMIN listaría también los desactivados
+  // y Google terminaría indexando URLs que responden 404.
   const [{ items: products }, categories] = await Promise.all([
     getProducts({ page: 1 }).catch(() => ({ items: [] })),
     getCategories().catch(() => []),
