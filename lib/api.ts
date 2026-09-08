@@ -1,6 +1,6 @@
 import { Category, PaginatedProducts, PublicProduct } from "@/types/product";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { SERVER_API_URL as API_URL } from "@/lib/api-url";
 
 export interface ProductListParams {
   category?: string;

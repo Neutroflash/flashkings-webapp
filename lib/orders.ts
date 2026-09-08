@@ -1,6 +1,9 @@
 import { CartValidationResult, CreateOrderResponse, Order } from "@/types/order";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// Este módulo se consume desde los dos lados: el checkout y el carrito son componentes de
+// cliente, pero getOrderById corre en el Server Component de la confirmación. Cada uno necesita
+// su propia URL — ver lib/api-url.ts.
+import { CLIENT_API_URL as API_URL, SERVER_API_URL } from "@/lib/api-url";
 
 export interface CartLineInput {
   variantId: string;
@@ -78,9 +81,10 @@ export function submitManualPayment(
   return apiPost<{ order: Order }>("/payments/manual", { orderId, method, operationNumber });
 }
 
-/** Server-side fetch for the confirmation page — order status changes, so never ISR-cache it. */
+/** Server-side fetch for the confirmation page — order status changes, so never ISR-cache it.
+ * Usa SERVER_API_URL: acá no hay origen contra el cual resolver una ruta relativa. */
 export async function getOrderById(orderId: string): Promise<Order | null> {
-  const res = await fetch(`${API_URL}/orders/${orderId}`, { cache: "no-store" });
+  const res = await fetch(`${SERVER_API_URL}/orders/${orderId}`, { cache: "no-store" });
   if (!res.ok) return null;
   const { order } = (await res.json()) as { order: Order };
   return order;

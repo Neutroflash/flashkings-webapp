@@ -6,7 +6,7 @@ import { Category } from "@/types/product";
 import { AdminComplaint } from "@/types/complaint";
 import { TicketComprobanteData } from "@/types/ticket";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { SERVER_API_URL as API_URL } from "@/lib/api-url";
 
 /**
  * Server Component fetch helper for admin data. Next's server-side `fetch` does not

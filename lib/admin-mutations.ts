@@ -1,7 +1,7 @@
 import { InvoiceType, Order, OrderInvoice, OrderStatus, Refund, RefundReason } from "@/types/order";
 import { AdminCategory, AdminProductVariant } from "@/types/admin";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { CLIENT_API_URL as API_URL } from "@/lib/api-url";
 
 // Client-safe: no next/headers import, so this can be imported from "use client" components
 // (InventoryTable/OrderStatusActions) — the browser sends cookies automatically via credentials: "include".

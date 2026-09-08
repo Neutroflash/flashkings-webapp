@@ -1,6 +1,6 @@
 import { PublicProduct } from "@/types/product";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+import { CLIENT_API_URL as API_URL } from "@/lib/api-url";
 
 // Capped tight — this feeds a live dropdown, not a results page. "Ver todos los resultados"
 // (in SearchBox) is what takes the shopper to the full, paginated /catalogo search.
